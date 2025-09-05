@@ -1,0 +1,139 @@
+{
+    "logging": {
+        "level": "info",
+        "enableConsoleLog": true,
+        "enableConsoleColors": true,
+        "logFile": "",
+        "logBaseDirectory": "",
+        "perPoolLogFile": false
+    },
+    "banning": {
+        "manager": "integrated",
+        "banOnJunkReceive": true,
+        "banOnInvalidShares": false
+    },
+    "notifications": {
+        "enabled": true,
+        "email": {
+            "host": "smtp.example.com",
+            "port": 587,
+            "user": "user",
+            "password": "password",
+            "fromAddress": "info@yourpool.org",
+            "fromName": "support"
+        },
+        "admin": {
+            "enabled": false,
+            "emailAddress": "user@example.com",
+            "notifyBlockFound": true
+        }
+    },
+    "persistence": {
+        "postgres": {
+            "host": "127.0.0.1",
+            "port": 5432,
+            "user": "miningcore",
+            "password": "password",
+            "database": "miningcore"
+        }
+    },
+    "paymentProcessing": {
+        "enabled": true,
+        "interval": 600,
+        "shareRecoveryFile": "recovered-shares.txt"
+    },
+    "pools": [{
+      "id": "tari-hybrid",
+      "enabled": true,
+      "coin": "tari-randomx",
+      "randomXRealm": "tari-hybrid",
+      "address": "your-tari-wallet-address",
+      "jobManager": "TariProxyJobManager",
+      "rewardRecipients": [
+        {
+          "address": "pool-fee-address",
+          "percentage": 1
+        }
+      ],
+      "blockRefreshInterval": 500,
+      "clientConnectionTimeout": 600,
+      "banning": {
+        "enabled": true,
+        "time": 600,
+        "invalidPercent": 50,
+        "checkThreshold": 50
+      },
+      "ports": {
+        "4032": {
+          "listenAddress": "0.0.0.0",
+          "difficulty": 7500,
+          "name": "RandomX CPU Mining (200s target)",
+          "varDiff": {
+            "minDiff": 1000,
+            "maxDiff": null,
+            "targetTime": 15,
+            "retargetTime": 90,
+            "variancePercent": 30
+          }
+        },
+        "4033": {
+          "listenAddress": "0.0.0.0",
+          "difficulty": 25000,
+          "name": "RandomX GPU Mining (200s target)",
+          "varDiff": {
+            "minDiff": 10000,
+            "maxDiff": null,
+            "targetTime": 15,
+            "retargetTime": 90,
+            "variancePercent": 30
+          }
+        },
+        "4042": {
+          "listenAddress": "0.0.0.0",
+          "difficulty": 4096,
+          "name": "SHA3x ASIC Mining (300s target)",
+          "varDiff": {
+            "minDiff": 2048,
+            "targetTime": 15,
+            "retargetTime": 90,
+            "variancePercent": 30
+          }
+        },
+        "4043": {
+          "listenAddress": "0.0.0.0",
+          "difficulty": 1024,
+          "name": "SHA3x GPU Mining (300s target)",
+          "varDiff": {
+            "minDiff": 512,
+            "targetTime": 15,
+            "retargetTime": 90,
+            "variancePercent": 30
+          }
+        }
+      },
+      "daemons": [
+        {
+          "host": "127.0.0.1",
+          "port": 18081,
+          "user": "user",
+          "password": "password"
+        },
+        {
+          "host": "127.0.0.1",
+          "port": 18082,
+          "user": "user",
+          "password": "password",
+          "category": "wallet"
+        }
+      ],
+      "paymentProcessing": {
+        "enabled": true,
+        "minimumPayment": 0.25,
+        "minimumPaymentToPaymentId": 1.0,
+        "payoutScheme": "PPLNS",
+        "payoutSchemeConfig": {
+          "factor": 2.0
+        }
+      }
+    }]
+}
