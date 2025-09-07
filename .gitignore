@@ -227,4 +227,8 @@ node_modules/
 
 # Task files
 # tasks.json
-# tasks/ 
+# tasks/
+
+# Added by Task Master AI
+tasks.json
+tasks/ 

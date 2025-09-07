@@ -4442,6 +4442,64 @@
         "explorerTxLink": "https://pinkscan.org/tx/{0}",
         "explorerAccountLink": "https://pinkscan.org/address/{0}"
     },
+    "alephium": {
+        "name": "Alephium",
+        "canonicalName": "Alephium",
+        "symbol": "ALPH",
+        "family": "bitcoin",
+        "website": "https://alephium.org/",
+        "market": "https://coinmarketcap.com/currencies/alephium/",
+        "twitter": "https://twitter.com/alephium",
+        "telegram": "https://t.me/alephiumgroup",
+        "discord": "https://discord.gg/JErgRBfRSB",
+        "coinbaseHasher": {
+            "hash": "sha256d"
+        },
+        "headerHasher": {
+            "hash": "blake3"
+        },
+        "blockHasher": {
+            "hash": "reverse",
+            "args": [
+                {
+                    "hash": "blake3"
+                }
+            ]
+        },
+        "shareMultiplier": 1,
+        "explorerBlockLink": "https://explorer.alephium.org/blocks/$hash$",
+        "explorerTxLink": "https://explorer.alephium.org/transactions/{0}",
+        "explorerAccountLink": "https://explorer.alephium.org/addresses/{0}"
+    },
+    "blake3coin": {
+        "name": "Blake3 Test Coin",
+        "canonicalName": "Blake3Coin",
+        "symbol": "B3C",
+        "family": "bitcoin",
+        "website": "https://github.com/BLAKE3-team/BLAKE3",
+        "market": "",
+        "twitter": "",
+        "telegram": "",
+        "discord": "",
+        "coinbaseHasher": {
+            "hash": "sha256d"
+        },
+        "headerHasher": {
+            "hash": "blake3"
+        },
+        "blockHasher": {
+            "hash": "reverse",
+            "args": [
+                {
+                    "hash": "blake3"
+                }
+            ]
+        },
+        "shareMultiplier": 1,
+        "explorerBlockLink": "https://example.com/block/$hash$",
+        "explorerTxLink": "https://example.com/tx/{0}",
+        "explorerAccountLink": "https://example.com/address/{0}"
+    },
     "ergo": {
         "name": "Ergo",
         "canonicalName": "Ergo",
@@ -4455,5 +4513,37 @@
         "explorerBlockLink": "https://explorer.ergoplatform.com/en/blocks/$hash$",
         "explorerTxLink": "https://explorer.ergoplatform.com/en/transactions/{0}",
         "explorerAccountLink": "https://explorer.ergoplatform.com/en/addresses/{0}"
+    },
+    "firo": {
+        "name": "Firo",
+        "canonicalName": "Firo",
+        "symbol": "FIRO",
+        "family": "bitcoin",
+        "website": "https://firo.org",
+        "market": "https://coinmarketcap.com/currencies/firo/",
+        "twitter": "https://twitter.com/firoorg",
+        "telegram": "https://t.me/firoorg",
+        "discord": "https://discord.gg/firo",
+        "coinbaseHasher": {
+            "hash": "sha256d"
+        },
+        "headerHasher": {
+            "hash": "firopow"
+        },
+        "blockHasher": {
+            "hash": "reverse",
+            "args": [
+                {
+                    "hash": "firopow"
+                }
+            ]
+        },
+        "shareMultiplier": 1,
+        "blockTemplateRpcExtraParams": [
+            "firopow"
+        ],
+        "explorerBlockLink": "https://explorer.firo.org/block/$hash$",
+        "explorerTxLink": "https://explorer.firo.org/tx/{0}",
+        "explorerAccountLink": "https://explorer.firo.org/address/{0}"
     }
 }

@@ -104,7 +104,9 @@ export const poolApi = {
 
   // Get miner payments
   async getMinerPayments(poolId: string, address: string): Promise<Payment[]> {
-    const response = await api.get(`/pools/${poolId}/miners/${address}/payments`);
+    const response = await api.get(
+      `/pools/${poolId}/miners/${address}/payments`
+    );
     return response.data;
   },
 };
@@ -112,7 +114,7 @@ export const poolApi = {
 // WebSocket connection for real-time updates
 export class WebSocketService {
   private socket: Socket | null = null;
-  private callbacks: Map<string, Function[]> = new Map();
+  private callbacks: Map<string, ((data: unknown) => void)[]> = new Map();
 
   connect() {
     if (this.socket?.connected) return;
@@ -128,19 +130,19 @@ export class WebSocketService {
     });
 
     // Handle real-time events
-    this.socket.on('block', (data) => {
+    this.socket.on('block', data => {
       this.emit('block', data);
     });
 
-    this.socket.on('payment', (data) => {
+    this.socket.on('payment', data => {
       this.emit('payment', data);
     });
 
-    this.socket.on('stats', (data) => {
+    this.socket.on('stats', data => {
       this.emit('stats', data);
     });
 
-    this.socket.on('hashrate', (data) => {
+    this.socket.on('hashrate', data => {
       this.emit('hashrate', data);
     });
   }
@@ -150,14 +152,14 @@ export class WebSocketService {
     this.socket = null;
   }
 
-  on(event: string, callback: Function) {
+  on(event: string, callback: (data: unknown) => void) {
     if (!this.callbacks.has(event)) {
       this.callbacks.set(event, []);
     }
     this.callbacks.get(event)?.push(callback);
   }
 
-  off(event: string, callback: Function) {
+  off(event: string, callback: (data: unknown) => void) {
     const callbacks = this.callbacks.get(event);
     if (callbacks) {
       const index = callbacks.indexOf(callback);
@@ -167,7 +169,7 @@ export class WebSocketService {
     }
   }
 
-  private emit(event: string, data: any) {
+  private emit(event: string, data: unknown) {
     const callbacks = this.callbacks.get(event);
     callbacks?.forEach(callback => callback(data));
   }

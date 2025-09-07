@@ -1,0 +1,131 @@
+{
+  "clusterName": "Velocity Pool - Alephium",
+  "logging": {
+    "level": "info",
+    "enableConsoleLog": true,
+    "enableConsoleColors": true,
+    "logFile": "./logs/alephium-pool.log",
+    "perPoolLogFile": true,
+    "logBaseDirectory": "./logs/"
+  },
+  "banning": {
+    "manager": "integrated",
+    "banOnJunkReceive": true,
+    "banOnInvalidShares": true,
+    "checkThreshold": 50,
+    "invalidPercent": 50,
+    "time": 600
+  },
+  "notifications": {
+    "enabled": true,
+    "email": {
+      "host": "smtp.gmail.com",
+      "port": 587,
+      "user": "your-email@gmail.com",
+      "password": "your-app-password",
+      "fromAddress": "your-email@gmail.com",
+      "fromName": "Velocity Pool Alephium"
+    },
+    "admin": {
+      "enabled": true,
+      "emailAddress": "admin@yourpool.com",
+      "notifyBlockFound": true
+    }
+  },
+  "persistence": {
+    "postgres": {
+      "host": "127.0.0.1",
+      "port": 5432,
+      "user": "miningcore",
+      "password": "your-database-password",
+      "database": "miningcore"
+    }
+  },
+  "paymentProcessing": {
+    "enabled": true,
+    "interval": 300,
+    "shareRecoveryFile": "./shared/recovery-alephium.json"
+  },
+  "api": {
+    "enabled": true,
+    "listenAddress": "127.0.0.1",
+    "port": 4001,
+    "rateLimiting": {
+      "disabled": false,
+      "rules": [
+        {
+          "endpoint": "*",
+          "period": "1m",
+          "limit": 300
+        }
+      ],
+      "ipWhitelist": [
+        "127.0.0.1",
+        "::1"
+      ]
+    }
+  },
+  "nicehashStats": {
+    "enabled": false
+  },
+  "pools": [
+    {
+      "id": "alephium",
+      "coin": "alephium",
+      "enabled": true,
+      "address": "YOUR_ALEPHIUM_WALLET_ADDRESS_HERE",
+      "addressInfoLink": "https://explorer.alephium.org/addresses/{0}",
+      "rewardRecipients": [
+        {
+          "type": "op_return",
+          "address": "YOUR_ALEPHIUM_WALLET_ADDRESS_HERE",
+          "percentage": 1.0
+        }
+      ],
+      "blockRefreshInterval": 200,
+      "jobRebroadcastTimeout": 55,
+      "clientConnectionTimeout": 600,
+      "ports": {
+        "4001": {
+          "name": "Blake3 - GPU",
+          "difficulty": 1000000,
+          "varDiff": {
+            "minDiff": 100000,
+            "maxDiff": 100000000,
+            "targetTime": 15,
+            "retargetTime": 120,
+            "variancePercent": 30
+          }
+        },
+        "4002": {
+          "name": "Blake3 - High End",
+          "difficulty": 10000000,
+          "varDiff": {
+            "minDiff": 1000000,
+            "maxDiff": 1000000000,
+            "targetTime": 15,
+            "retargetTime": 120,
+            "variancePercent": 30
+          }
+        }
+      },
+      "daemons": [
+        {
+          "host": "127.0.0.1",
+          "port": 12973,
+          "user": "",
+          "password": "YOUR_ALEPHIUM_API_KEY_HERE",
+          "category": "primary"
+        }
+      ],
+      "paymentProcessing": {
+        "enabled": true,
+        "minimumPayment": 1.0,
+        "payoutScheme": "PPLNS",
+        "payoutSchemeConfig": {
+          "factor": 2.0
+        }
+      }
+    }
+  ]
+}

@@ -29,3 +29,12 @@ export HAVE_FEATURE="$HAVE_AES $HAVE_SSE2 $HAVE_SSE3 $HAVE_SSSE3 $HAVE_AVX $HAVE
 
 ((cd /tmp && rm -rf RandomX && git clone https://github.com/tevador/RandomX && cd RandomX && git checkout tags/v1.1.10 && mkdir build && cd build && cmake -DARCH=native .. && make) && (cd ../Native/librandomx && cp /tmp/RandomX/build/librandomx.a . && make clean && make) && mv ../Native/librandomx/librandomx.so "$OutDir")
 ((cd /tmp && rm -rf RandomARQ && git clone https://github.com/arqma/RandomARQ && cd RandomARQ && git checkout 14850620439045b319fa6398f5a164715c4a66ce && mkdir build && cd build && cmake -DARCH=native .. && make) && (cd ../Native/librandomarq && cp /tmp/RandomARQ/build/librandomx.a . && make clean && make) && mv ../Native/librandomarq/librandomarq.so "$OutDir")
+
+# Build Blake3 library with SIMD optimizations
+(cd ../Native/libblake3 && make clean && make) && mv ../Native/libblake3/libblake3.so "$OutDir"
+
+# Build FiroPow library (based on KawPow with Firo-specific modifications)
+(cd ../Native/libfiropow && make prepare && make clean && make) && mv ../Native/libfiropow/libfiropow.so "$OutDir"
+
+# Build VerusHash library with AES-NI and AVX2 optimizations
+(cd ../Native/libverushash && make clean && make) && mv ../Native/libverushash/libverushash.so "$OutDir"

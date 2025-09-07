@@ -171,9 +171,9 @@ public class AutofacModule : Module
         builder.RegisterType<ErgoJobManager>();
 
         //////////////////////
-        // Tari
-
-        builder.RegisterType<TariProxyJobManager>();
+        // Tari (disabled for Blake3 testing)
+        
+        // builder.RegisterType<TariProxyJobManager>();
 
         base.Load(builder);
     }

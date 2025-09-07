@@ -1,12 +1,25 @@
-"use client";
+'use client';
 
-import { useState, useEffect } from 'react';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { useState, useEffect, useCallback } from 'react';
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Button } from '@/components/ui/button';
 import { PoolStats, poolApi, wsService } from '@/lib/api';
-import { Activity, Zap, Users, Blocks, TrendingUp, RefreshCw } from 'lucide-react';
+import {
+  Activity,
+  Zap,
+  Users,
+  Blocks,
+  TrendingUp,
+  RefreshCw,
+} from 'lucide-react';
 
 export function PoolOverview() {
   const [pools, setPools] = useState<PoolStats[]>([]);
@@ -14,28 +27,7 @@ export function PoolOverview() {
   const [loading, setLoading] = useState(true);
   const [lastUpdate, setLastUpdate] = useState<Date>(new Date());
 
-  useEffect(() => {
-    loadPools();
-    
-    // Connect to WebSocket for real-time updates
-    wsService.connect();
-    
-    const handleStatsUpdate = (data: any) => {
-      setLastUpdate(new Date());
-      // Update specific pool stats
-      setPools(prev => prev.map(pool => 
-        pool.id === data.poolId ? { ...pool, ...data } : pool
-      ));
-    };
-
-    wsService.on('stats', handleStatsUpdate);
-
-    return () => {
-      wsService.off('stats', handleStatsUpdate);
-    };
-  }, []);
-
-  const loadPools = async () => {
+  const loadPools = useCallback(async () => {
     try {
       setLoading(true);
       const poolData = await poolApi.getPools();
@@ -48,7 +40,32 @@ export function PoolOverview() {
     } finally {
       setLoading(false);
     }
-  };
+  }, [selectedPool]);
+
+  useEffect(() => {
+    const handleStatsUpdate = (data: unknown) => {
+      setLastUpdate(new Date());
+      // Update specific pool stats
+      if (typeof data === 'object' && data !== null && 'poolId' in data) {
+        const statsData = data as Record<string, unknown>;
+        if (statsData.poolId && typeof statsData.poolId === 'string') {
+          setPools(prev => prev.map(pool => 
+            pool.id === statsData.poolId ? { ...pool, ...statsData } : pool
+          ));
+        }
+      }
+    };
+
+    loadPools();
+    
+    // Connect to WebSocket for real-time updates
+    wsService.connect();
+    wsService.on('stats', handleStatsUpdate);
+
+    return () => {
+      wsService.off('stats', handleStatsUpdate);
+    };
+  }, [loadPools]);
 
   const formatHashrate = (hashrate: number): string => {
     if (hashrate >= 1e12) return `${(hashrate / 1e12).toFixed(2)} TH/s`;
@@ -66,7 +83,7 @@ export function PoolOverview() {
     return difficulty.toFixed(0);
   };
 
-  const currentPool = pools.find(p => p.id === selectedPool);
+  // const currentPool = pools.find(p => p.id === selectedPool); // Currently unused
 
   if (loading) {
     return (
@@ -81,9 +98,12 @@ export function PoolOverview() {
       {/* Header */}
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-3xl font-bold tracking-tight">Velocity Pool Dashboard</h1>
+          <h1 className="text-3xl font-bold tracking-tight">
+            Velocity Pool Dashboard
+          </h1>
           <p className="text-muted-foreground">
-            Monitor your mining pools in real-time • Last updated: {lastUpdate.toLocaleTimeString()}
+            Monitor your mining pools in real-time • Last updated:{' '}
+            {lastUpdate.toLocaleTimeString()}
           </p>
         </div>
         <Button onClick={loadPools} variant="outline" size="sm">
@@ -95,38 +115,51 @@ export function PoolOverview() {
       {/* Pool Selection Tabs */}
       <Tabs value={selectedPool} onValueChange={setSelectedPool}>
         <TabsList className="grid w-full grid-cols-4">
-          {pools.map((pool) => (
-            <TabsTrigger key={pool.id} value={pool.id} className="flex items-center gap-2">
+          {pools.map(pool => (
+            <TabsTrigger
+              key={pool.id}
+              value={pool.id}
+              className="flex items-center gap-2"
+            >
               <Badge variant="secondary">{pool.coin}</Badge>
               {pool.name}
             </TabsTrigger>
           ))}
         </TabsList>
 
-        {pools.map((pool) => (
+        {pools.map(pool => (
           <TabsContent key={pool.id} value={pool.id} className="space-y-6">
             {/* Stats Cards */}
             <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
               <Card>
                 <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                  <CardTitle className="text-sm font-medium">Pool Hashrate</CardTitle>
+                  <CardTitle className="text-sm font-medium">
+                    Pool Hashrate
+                  </CardTitle>
                   <Zap className="h-4 w-4 text-muted-foreground" />
                 </CardHeader>
                 <CardContent>
-                  <div className="text-2xl font-bold">{formatHashrate(pool.hashrate)}</div>
+                  <div className="text-2xl font-bold">
+                    {formatHashrate(pool.hashrate)}
+                  </div>
                   <p className="text-xs text-muted-foreground">
-                    {((pool.hashrate / pool.networkHashrate) * 100).toFixed(2)}% of network
+                    {((pool.hashrate / pool.networkHashrate) * 100).toFixed(2)}%
+                    of network
                   </p>
                 </CardContent>
               </Card>
 
               <Card>
                 <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                  <CardTitle className="text-sm font-medium">Active Miners</CardTitle>
+                  <CardTitle className="text-sm font-medium">
+                    Active Miners
+                  </CardTitle>
                   <Users className="h-4 w-4 text-muted-foreground" />
                 </CardHeader>
                 <CardContent>
-                  <div className="text-2xl font-bold">{pool.miners.toLocaleString()}</div>
+                  <div className="text-2xl font-bold">
+                    {pool.miners.toLocaleString()}
+                  </div>
                   <p className="text-xs text-muted-foreground">
                     Currently mining {pool.coin}
                   </p>
@@ -135,24 +168,34 @@ export function PoolOverview() {
 
               <Card>
                 <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                  <CardTitle className="text-sm font-medium">Blocks Found</CardTitle>
+                  <CardTitle className="text-sm font-medium">
+                    Blocks Found
+                  </CardTitle>
                   <Blocks className="h-4 w-4 text-muted-foreground" />
                 </CardHeader>
                 <CardContent>
-                  <div className="text-2xl font-bold">{pool.blocks.toLocaleString()}</div>
+                  <div className="text-2xl font-bold">
+                    {pool.blocks.toLocaleString()}
+                  </div>
                   <p className="text-xs text-muted-foreground">
-                    {pool.lastBlockTime ? `Last: ${new Date(pool.lastBlockTime).toLocaleTimeString()}` : 'No blocks yet'}
+                    {pool.lastBlockTime
+                      ? `Last: ${new Date(pool.lastBlockTime).toLocaleTimeString()}`
+                      : 'No blocks yet'}
                   </p>
                 </CardContent>
               </Card>
 
               <Card>
                 <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                  <CardTitle className="text-sm font-medium">Network Difficulty</CardTitle>
+                  <CardTitle className="text-sm font-medium">
+                    Network Difficulty
+                  </CardTitle>
                   <TrendingUp className="h-4 w-4 text-muted-foreground" />
                 </CardHeader>
                 <CardContent>
-                  <div className="text-2xl font-bold">{formatDifficulty(pool.difficulty)}</div>
+                  <div className="text-2xl font-bold">
+                    {formatDifficulty(pool.difficulty)}
+                  </div>
                   <p className="text-xs text-muted-foreground">
                     Algorithm: {pool.algorithm}
                   </p>
@@ -173,16 +216,26 @@ export function PoolOverview() {
               </CardHeader>
               <CardContent className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
                 <div>
-                  <dt className="text-sm font-medium text-muted-foreground">Pool Fee</dt>
+                  <dt className="text-sm font-medium text-muted-foreground">
+                    Pool Fee
+                  </dt>
                   <dd className="text-lg font-semibold">{pool.poolFee}%</dd>
                 </div>
                 <div>
-                  <dt className="text-sm font-medium text-muted-foreground">Min Payout</dt>
-                  <dd className="text-lg font-semibold">{pool.minPayout} {pool.coin}</dd>
+                  <dt className="text-sm font-medium text-muted-foreground">
+                    Min Payout
+                  </dt>
+                  <dd className="text-lg font-semibold">
+                    {pool.minPayout} {pool.coin}
+                  </dd>
                 </div>
                 <div>
-                  <dt className="text-sm font-medium text-muted-foreground">Network Hashrate</dt>
-                  <dd className="text-lg font-semibold">{formatHashrate(pool.networkHashrate)}</dd>
+                  <dt className="text-sm font-medium text-muted-foreground">
+                    Network Hashrate
+                  </dt>
+                  <dd className="text-lg font-semibold">
+                    {formatHashrate(pool.networkHashrate)}
+                  </dd>
                 </div>
               </CardContent>
             </Card>
