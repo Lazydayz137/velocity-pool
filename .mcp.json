@@ -1,0 +1,45 @@
+{
+  "mcpServers": {
+    "filesystem": {
+      "command": "docker",
+      "args": ["run", "--rm", "-i", "--mount", "type=bind,source=${PWD},target=/mcp", "mcp/filesystem"],
+      "env": {}
+    },
+    "postgres": {
+      "command": "docker", 
+      "args": ["run", "--rm", "-i", "--network", "host", "mcp/postgres"],
+      "env": {
+        "POSTGRES_CONNECTION_STRING": "postgresql://${PGUSER:-miningcore}:${PGPASSWORD}@localhost:5432/${PGDATABASE:-miningcore}"
+      }
+    },
+    "git": {
+      "command": "docker",
+      "args": ["run", "--rm", "-i", "--mount", "type=bind,source=${PWD},target=/mcp", "mcp/git"],
+      "env": {}
+    },
+    "brave-search": {
+      "command": "docker",
+      "args": ["run", "--rm", "-i", "mcp/brave-search"], 
+      "env": {
+        "BRAVE_API_KEY": "${BRAVE_API_KEY}"
+      }
+    },
+    "github": {
+      "command": "docker",
+      "args": ["run", "--rm", "-i", "mcp/github"],
+      "env": {
+        "GITHUB_PERSONAL_ACCESS_TOKEN": "${GITHUB_TOKEN}"
+      }
+    },
+    "sqlite": {
+      "command": "docker",
+      "args": ["run", "--rm", "-i", "--mount", "type=bind,source=${PWD},target=/mcp", "mcp/sqlite"],
+      "env": {}
+    },
+    "docker": {
+      "command": "docker",
+      "args": ["run", "--rm", "-i", "--mount", "type=bind,source=/var/run/docker.sock,target=/var/run/docker.sock", "mcp/docker"],
+      "env": {}
+    }
+  }
+}

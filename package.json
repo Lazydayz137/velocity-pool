@@ -1,0 +1,24 @@
+{
+  "name": "velocity-pool",
+  "version": "1.0.0",
+  "description": "High-performance multi-currency mining pool software",
+  "scripts": {
+    "dev:frontend": "cd frontend/velocity-dashboard && npm run dev",
+    "build:frontend": "cd frontend/velocity-dashboard && npm run build",
+    "build:backend": "./build-ubuntu-22.04.sh",
+    "build": "npm run build:backend && npm run build:frontend",
+    "docker:up": "docker-compose -f docker-compose.mcp.yml up -d",
+    "docker:down": "docker-compose -f docker-compose.mcp.yml down"
+  },
+  "keywords": [
+    "mining",
+    "pool",
+    "cryptocurrency",
+    "bitcoin",
+    "ethereum",
+    "monero",
+    "stratum"
+  ],
+  "author": "Velocity Pool Team",
+  "license": "MIT"
+}

@@ -1,0 +1,112 @@
+version: '3.8'
+
+services:
+  # Velocity Pool Application
+  velocity-pool:
+    build: .
+    container_name: velocity-pool
+    ports:
+      - "4000:4000"       # API port
+      - "3333:3333"       # Bitcoin Stratum
+      - "4444:4444"       # Ethereum Stratum  
+      - "5555:5555"       # Monero Stratum
+    volumes:
+      - ./config.json:/app/config.json
+      - ./logs:/app/logs
+    environment:
+      - DB_PASSWORD=${DB_PASSWORD}
+      - RPC_PASSWORD=${RPC_PASSWORD}
+    depends_on:
+      - postgres
+    restart: unless-stopped
+    networks:
+      - velocity-net
+
+  # PostgreSQL Database
+  postgres:
+    image: postgres:14
+    container_name: velocity-postgres
+    environment:
+      - POSTGRES_USER=${PGUSER:-miningcore}
+      - POSTGRES_PASSWORD=${PGPASSWORD}
+      - POSTGRES_DB=${PGDATABASE:-miningcore}
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+      - ./src/Miningcore/Persistence/Postgres/Scripts:/docker-entrypoint-initdb.d
+    ports:
+      - "5432:5432"
+    restart: unless-stopped
+    networks:
+      - velocity-net
+
+  # MCP Server for Claude (Anthropic)
+  claude-mcp:
+    image: anthropic/claude-mcp:latest
+    container_name: claude-mcp-server
+    environment:
+      - ANTHROPIC_API_KEY=${ANTHROPIC_API_KEY}
+      - WORKSPACE_PATH=/workspace
+    volumes:
+      - .:/workspace
+    ports:
+      - "8001:8000"
+    restart: unless-stopped
+    networks:
+      - velocity-net
+
+  # MCP Filesystem Server
+  mcp-filesystem:
+    image: mcp/filesystem:latest
+    container_name: mcp-filesystem
+    volumes:
+      - .:/workspace
+    working_dir: /workspace
+    ports:
+      - "8002:8000"
+    restart: unless-stopped
+    networks:
+      - velocity-net
+
+  # MCP PostgreSQL Server
+  mcp-postgres:
+    image: mcp/postgres:latest
+    container_name: mcp-postgres-server
+    environment:
+      - PGHOST=postgres
+      - PGPORT=5432
+      - PGUSER=${PGUSER:-miningcore}
+      - PGPASSWORD=${PGPASSWORD}
+      - PGDATABASE=${PGDATABASE:-miningcore}
+    ports:
+      - "8003:8000"
+    depends_on:
+      - postgres
+    restart: unless-stopped
+    networks:
+      - velocity-net
+
+  # Task Master AI MCP Server
+  task-master-mcp:
+    image: node:18-alpine
+    container_name: task-master-mcp
+    working_dir: /app
+    command: sh -c "npm install -g task-master-ai && task-master-ai"
+    environment:
+      - ANTHROPIC_API_KEY=${ANTHROPIC_API_KEY}
+      - PERPLEXITY_API_KEY=${PERPLEXITY_API_KEY}
+      - OPENAI_API_KEY=${OPENAI_API_KEY}
+      - GOOGLE_API_KEY=${GOOGLE_API_KEY}
+    volumes:
+      - .:/app
+    ports:
+      - "8004:8000"
+    restart: unless-stopped
+    networks:
+      - velocity-net
+
+volumes:
+  postgres_data:
+
+networks:
+  velocity-net:
+    driver: bridge

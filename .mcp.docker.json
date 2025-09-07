@@ -1,0 +1,44 @@
+{
+  "mcpServers": {
+    "claude-docker": {
+      "command": "curl",
+      "args": [
+        "-X", "POST",
+        "-H", "Content-Type: application/json",
+        "-H", "Authorization: Bearer ${ANTHROPIC_API_KEY}",
+        "--data-binary", "@-",
+        "http://localhost:8001/mcp"
+      ],
+      "env": {
+        "ANTHROPIC_API_KEY": "${ANTHROPIC_API_KEY}"
+      }
+    },
+    "filesystem-docker": {
+      "command": "curl",
+      "args": [
+        "-X", "POST", 
+        "-H", "Content-Type: application/json",
+        "--data-binary", "@-",
+        "http://localhost:8002/mcp"
+      ]
+    },
+    "postgres-docker": {
+      "command": "curl",
+      "args": [
+        "-X", "POST",
+        "-H", "Content-Type: application/json", 
+        "--data-binary", "@-",
+        "http://localhost:8003/mcp"
+      ]
+    },
+    "task-master-docker": {
+      "command": "curl",
+      "args": [
+        "-X", "POST",
+        "-H", "Content-Type: application/json",
+        "--data-binary", "@-", 
+        "http://localhost:8004/mcp"
+      ]
+    }
+  }
+}
