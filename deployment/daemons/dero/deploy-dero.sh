@@ -52,22 +52,12 @@ check_prerequisites() {
     log "Prerequisites check completed"
 }
 
-create_user() {
-    log "Creating Dero daemon user..."
-    
-    if ! id "$DERO_USER" &>/dev/null; then
-        sudo adduser --disabled-password --gecos "" $DERO_USER
-        log "Created user: $DERO_USER"
-    else
-        log "User $DERO_USER already exists"
-    fi
-}
 
 install_dependencies() {
     log "Installing system dependencies..."
     
-    sudo apt update
-    sudo apt install -y \
+    apt update
+    apt install -y \
         wget \
         curl \
         tar \
@@ -99,33 +89,27 @@ install_dero() {
     
     cd /tmp
     
-    # Extract binary
-    tar -xzf "dero_${ARCH}_${DERO_VERSION}.tar.gz" 2>/dev/null || \
-    tar -xzf "dero-${ARCH}-${DERO_VERSION}.tar.gz" 2>/dev/null || \
-    tar -xzf "dero-linux-amd64.tar.gz" 2>/dev/null || \
-    error "Failed to extract Dero binary"
+    # Extract binary (verified: extracts to dero_linux_amd64/ subdirectory)
+    tar -xzf "$FILENAME" || error "Failed to extract Dero binary"
     
-    # Find the extracted directory
-    EXTRACT_DIR=$(find . -type d -name "*dero*" | head -1)
-    if [ -z "$EXTRACT_DIR" ]; then
-        error "Could not find extracted Dero directory"
+    # The extracted directory is always dero_linux_amd64
+    EXTRACT_DIR="dero_linux_amd64"
+    if [ ! -d "$EXTRACT_DIR" ]; then
+        error "Could not find extracted Dero directory: $EXTRACT_DIR"
     fi
     
     cd "$EXTRACT_DIR"
     
-    # Install binaries
-    if [ -f "derod-linux-amd64" ]; then
-        sudo cp derod-linux-amd64 $DERO_BIN_DIR/derod
-        sudo cp dero-wallet-cli-linux-amd64 $DERO_BIN_DIR/dero-wallet-cli
-    elif [ -f "derod" ]; then
-        sudo cp derod $DERO_BIN_DIR/
-        sudo cp dero-wallet-cli $DERO_BIN_DIR/
+    # Install binaries (verified locations)
+    if [ -f "derod-linux-amd64" ] && [ -f "dero-wallet-cli-linux-amd64" ]; then
+        cp derod-linux-amd64 $DERO_BIN_DIR/derod
+        cp dero-wallet-cli-linux-amd64 $DERO_BIN_DIR/dero-wallet-cli
     else
-        error "Could not find derod binary"
+        error "Could not find derod-linux-amd64 or dero-wallet-cli-linux-amd64 binaries"
     fi
     
-    sudo chmod +x $DERO_BIN_DIR/derod
-    sudo chmod +x $DERO_BIN_DIR/dero-wallet-cli
+    chmod +x $DERO_BIN_DIR/derod
+    chmod +x $DERO_BIN_DIR/dero-wallet-cli
     
     # Verify installation
     if ! $DERO_BIN_DIR/derod --version &>/dev/null; then
@@ -139,7 +123,7 @@ configure_dero() {
     log "Configuring Dero daemon..."
     
     # Create data directory
-    sudo -u $DERO_USER mkdir -p "$DERO_DATA_DIR"
+    -u $DERO_USER mkdir -p "$DERO_DATA_DIR"
     
     # Generate RPC credentials
     RPC_USER="derorpc$(openssl rand -hex 4)"
@@ -161,7 +145,7 @@ EOF
 create_systemd_service() {
     log "Creating systemd service..."
     
-    sudo cat > /etc/systemd/system/dero-daemon.service << EOF
+    cat > /etc/systemd/system/dero-daemon.service << EOF
 [Unit]
 Description=Dero Daemon
 Documentation=https://github.com/deroproject/derohe
@@ -192,8 +176,8 @@ ProtectHome=false
 WantedBy=multi-user.target
 EOF
 
-    sudo systemctl daemon-reload
-    sudo systemctl enable dero-daemon
+    systemctl daemon-reload
+    systemctl enable dero-daemon
     
     log "systemd service created and enabled"
 }
@@ -201,7 +185,7 @@ EOF
 setup_logrotate() {
     log "Setting up log rotation..."
     
-    sudo cat > /etc/logrotate.d/dero << EOF
+    cat > /etc/logrotate.d/dero << EOF
 /var/log/dero/*.log {
     daily
     missingok
@@ -215,8 +199,8 @@ setup_logrotate() {
 EOF
     
     # Create log directory
-    sudo mkdir -p /var/log/dero
-    sudo chown $DERO_USER:$DERO_USER /var/log/dero
+    mkdir -p /var/log/dero
+    chown $DERO_USER:$DERO_USER /var/log/dero
     
     log "Log rotation configured"
 }
@@ -225,7 +209,7 @@ setup_monitoring() {
     log "Setting up monitoring scripts..."
     
     # Create monitoring script
-    sudo cat > $DERO_BIN_DIR/dero-monitor.sh << 'EOF'
+    cat > $DERO_BIN_DIR/dero-monitor.sh << 'EOF'
 #!/bin/bash
 # Dero daemon monitoring script
 
@@ -273,7 +257,7 @@ echo "  Status: Synced"
 exit 0
 EOF
 
-    sudo chmod +x $DERO_BIN_DIR/dero-monitor.sh
+    chmod +x $DERO_BIN_DIR/dero-monitor.sh
     
     # Add monitoring cron job
     (crontab -l 2>/dev/null; echo "*/5 * * * * $DERO_BIN_DIR/dero-monitor.sh") | crontab -
@@ -284,13 +268,13 @@ EOF
 start_daemon() {
     log "Starting Dero daemon..."
     
-    sudo systemctl start dero-daemon
+    systemctl start dero-daemon
     
     # Wait for daemon to start
     sleep 15
     
     # Check if it's running
-    if sudo systemctl is-active --quiet dero-daemon; then
+    if systemctl is-active --quiet dero-daemon; then
         log "Dero daemon started successfully"
     else
         error "Failed to start Dero daemon"
@@ -310,9 +294,9 @@ display_summary() {
     cat /tmp/dero-rpc-credentials.txt
     echo ""
     echo "Useful commands:"
-    echo "  sudo systemctl status dero-daemon        # Check service status"
-    echo "  sudo systemctl restart dero-daemon       # Restart daemon"
-    echo "  sudo journalctl -u dero-daemon -f        # View logs"
+    echo "  systemctl status dero-daemon        # Check service status"
+    echo "  systemctl restart dero-daemon       # Restart daemon"
+    echo "  journalctl -u dero-daemon -f        # View logs"
     echo "  $DERO_BIN_DIR/dero-monitor.sh             # Monitor daemon"
     echo ""
     echo "Testing RPC connection:"
@@ -331,7 +315,7 @@ main() {
     log "Starting Dero daemon deployment..."
     
     check_prerequisites
-    create_user
+    create_config_dir
     install_dependencies
     download_dero
     install_dero

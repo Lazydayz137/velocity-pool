@@ -52,22 +52,12 @@ check_prerequisites() {
     log "Prerequisites check completed"
 }
 
-create_user() {
-    log "Creating Raptoreum daemon user..."
-    
-    if ! id "$RAPTOREUM_USER" &>/dev/null; then
-        sudo adduser --disabled-password --gecos "" $RAPTOREUM_USER
-        log "Created user: $RAPTOREUM_USER"
-    else
-        log "User $RAPTOREUM_USER already exists"
-    fi
-}
 
 install_dependencies() {
     log "Installing system dependencies..."
     
-    sudo apt update
-    sudo apt install -y \
+    apt update
+    apt install -y \
         wget \
         curl \
         tar \
@@ -99,33 +89,19 @@ install_raptoreum() {
     
     cd /tmp
     
-    # Extract binary
-    tar -xzf "raptoreum-${RAPTOREUM_VERSION}-${ARCH}.tar.gz" 2>/dev/null || \
-    tar -xzf "raptoreum-${RAPTOREUM_VERSION}-linux.tar.gz" 2>/dev/null || \
-    tar -xzf "raptoreum-${RAPTOREUM_VERSION}.tar.gz" 2>/dev/null || \
-    error "Failed to extract Raptoreum binary"
+    # Extract binary (verified: extracts directly to /tmp)
+    tar -xzf "$FILENAME" || error "Failed to extract Raptoreum binary"
     
-    # Find the extracted directory
-    EXTRACT_DIR=$(find . -type d -name "*raptoreum*" | head -1)
-    if [ -z "$EXTRACT_DIR" ]; then
-        error "Could not find extracted Raptoreum directory"
-    fi
-    
-    cd "$EXTRACT_DIR"
-    
-    # Install binaries
-    if [ -f "bin/raptoreumd" ]; then
-        sudo cp bin/raptoreumd $RAPTOREUM_BIN_DIR/
-        sudo cp bin/raptoreum-cli $RAPTOREUM_BIN_DIR/
-    elif [ -f "raptoreumd" ]; then
-        sudo cp raptoreumd $RAPTOREUM_BIN_DIR/
-        sudo cp raptoreum-cli $RAPTOREUM_BIN_DIR/
+    # Binaries are extracted directly to /tmp (no subdirectory)
+    if [ -f "raptoreumd" ] && [ -f "raptoreum-cli" ]; then
+        cp raptoreumd $RAPTOREUM_BIN_DIR/
+        cp raptoreum-cli $RAPTOREUM_BIN_DIR/
     else
-        error "Could not find raptoreumd binary"
+        error "Could not find raptoreumd or raptoreum-cli binaries"
     fi
     
-    sudo chmod +x $RAPTOREUM_BIN_DIR/raptoreumd
-    sudo chmod +x $RAPTOREUM_BIN_DIR/raptoreum-cli
+    chmod +x $RAPTOREUM_BIN_DIR/raptoreumd
+    chmod +x $RAPTOREUM_BIN_DIR/raptoreum-cli
     
     # Verify installation
     if ! $RAPTOREUM_BIN_DIR/raptoreumd --version &>/dev/null; then
@@ -139,14 +115,14 @@ configure_raptoreum() {
     log "Configuring Raptoreum daemon..."
     
     # Create data directory
-    sudo -u $RAPTOREUM_USER mkdir -p "$RAPTOREUM_DATA_DIR"
+    -u $RAPTOREUM_USER mkdir -p "$RAPTOREUM_DATA_DIR"
     
     # Generate RPC credentials
     RPC_USER="raptoreumrpc$(openssl rand -hex 4)"
     RPC_PASS=$(openssl rand -base64 32)
     
     # Create configuration file
-    sudo -u $RAPTOREUM_USER cat > "$RAPTOREUM_DATA_DIR/raptoreum.conf" << EOF
+    -u $RAPTOREUM_USER cat > "$RAPTOREUM_DATA_DIR/raptoreum.conf" << EOF
 # Raptoreum daemon configuration for mining pool
 # Generated on $(date)
 
@@ -189,8 +165,8 @@ par=0
 EOF
 
     # Set proper permissions
-    sudo chown $RAPTOREUM_USER:$RAPTOREUM_USER "$RAPTOREUM_DATA_DIR/raptoreum.conf"
-    sudo chmod 600 "$RAPTOREUM_DATA_DIR/raptoreum.conf"
+    chown $RAPTOREUM_USER:$RAPTOREUM_USER "$RAPTOREUM_DATA_DIR/raptoreum.conf"
+    chmod 600 "$RAPTOREUM_DATA_DIR/raptoreum.conf"
     
     # Save RPC credentials for pool configuration
     cat > /tmp/raptoreum-rpc-credentials.txt << EOF
@@ -208,7 +184,7 @@ EOF
 create_systemd_service() {
     log "Creating systemd service..."
     
-    sudo cat > /etc/systemd/system/raptoreum-daemon.service << EOF
+    cat > /etc/systemd/system/raptoreum-daemon.service << EOF
 [Unit]
 Description=Raptoreum Core Daemon
 Documentation=https://github.com/Raptor3um/raptoreum
@@ -243,8 +219,8 @@ ProtectHome=false
 WantedBy=multi-user.target
 EOF
 
-    sudo systemctl daemon-reload
-    sudo systemctl enable raptoreum-daemon
+    systemctl daemon-reload
+    systemctl enable raptoreum-daemon
     
     log "systemd service created and enabled"
 }
@@ -252,7 +228,7 @@ EOF
 setup_logrotate() {
     log "Setting up log rotation..."
     
-    sudo cat > /etc/logrotate.d/raptoreum << EOF
+    cat > /etc/logrotate.d/raptoreum << EOF
 $RAPTOREUM_DATA_DIR/debug.log {
     daily
     missingok
@@ -272,12 +248,12 @@ setup_monitoring() {
     log "Setting up monitoring scripts..."
     
     # Create monitoring script
-    sudo cat > $RAPTOREUM_BIN_DIR/raptoreum-monitor.sh << 'EOF'
+    cat > $RAPTOREUM_BIN_DIR/raptoreum-monitor.sh << 'EOF'
 #!/bin/bash
 # Raptoreum daemon monitoring script
 
 RAPTOREUM_CLI="/usr/local/bin/raptoreum-cli"
-DATA_DIR="/home/raptoreum/.raptoreumcore"
+DATA_DIR="$HOME/.raptoreumcore"
 
 # Check if daemon is running
 if ! pgrep -f "raptoreumd" > /dev/null; then
@@ -340,7 +316,7 @@ fi
 exit 0
 EOF
 
-    sudo chmod +x $RAPTOREUM_BIN_DIR/raptoreum-monitor.sh
+    chmod +x $RAPTOREUM_BIN_DIR/raptoreum-monitor.sh
     
     # Add monitoring cron job
     (crontab -l 2>/dev/null; echo "*/5 * * * * $RAPTOREUM_BIN_DIR/raptoreum-monitor.sh") | crontab -
@@ -351,13 +327,13 @@ EOF
 start_daemon() {
     log "Starting Raptoreum daemon..."
     
-    sudo systemctl start raptoreum-daemon
+    systemctl start raptoreum-daemon
     
     # Wait for daemon to start (GhostRider takes longer to initialize)
     sleep 20
     
     # Check if it's running
-    if sudo systemctl is-active --quiet raptoreum-daemon; then
+    if systemctl is-active --quiet raptoreum-daemon; then
         log "Raptoreum daemon started successfully"
     else
         error "Failed to start Raptoreum daemon"
@@ -378,9 +354,9 @@ display_summary() {
     cat /tmp/raptoreum-rpc-credentials.txt
     echo ""
     echo "Useful commands:"
-    echo "  sudo systemctl status raptoreum-daemon     # Check service status"
-    echo "  sudo systemctl restart raptoreum-daemon    # Restart daemon"
-    echo "  sudo journalctl -u raptoreum-daemon -f     # View logs"
+    echo "  systemctl status raptoreum-daemon     # Check service status"
+    echo "  systemctl restart raptoreum-daemon    # Restart daemon"
+    echo "  journalctl -u raptoreum-daemon -f     # View logs"
     echo "  $RAPTOREUM_BIN_DIR/raptoreum-monitor.sh     # Monitor daemon"
     echo "  $RAPTOREUM_BIN_DIR/raptoreum-cli getinfo    # Get daemon info"
     echo ""
@@ -395,7 +371,7 @@ main() {
     log "Starting Raptoreum daemon deployment..."
     
     check_prerequisites
-    create_user
+    create_config_dir
     install_dependencies
     download_raptoreum
     install_raptoreum

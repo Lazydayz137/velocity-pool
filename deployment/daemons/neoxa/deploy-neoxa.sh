@@ -52,22 +52,12 @@ check_prerequisites() {
     log "Prerequisites check completed"
 }
 
-create_user() {
-    log "Creating Neoxa daemon user..."
-    
-    if ! id "$NEOXA_USER" &>/dev/null; then
-        sudo adduser --disabled-password --gecos "" $NEOXA_USER
-        log "Created user: $NEOXA_USER"
-    else
-        log "User $NEOXA_USER already exists"
-    fi
-}
 
 install_dependencies() {
     log "Installing system dependencies..."
     
-    sudo apt update
-    sudo apt install -y \
+    apt update
+    apt install -y \
         wget \
         curl \
         tar \
@@ -99,30 +89,19 @@ install_neoxa() {
     
     cd /tmp
     
-    # Extract binary (ZIP format)
+    # Extract binary (verified: ZIP extracts directly to /tmp)
     unzip -q "$FILENAME" || error "Failed to extract Neoxa binary"
     
-    # Find the extracted directory
-    EXTRACT_DIR=$(find . -type d -name "*neoxa*" | head -1)
-    if [ -z "$EXTRACT_DIR" ]; then
-        error "Could not find extracted Neoxa directory"
-    fi
-    
-    cd "$EXTRACT_DIR"
-    
-    # Install binaries
-    if [ -f "bin/neoxad" ]; then
-        sudo cp bin/neoxad $NEOXA_BIN_DIR/
-        sudo cp bin/neoxa-cli $NEOXA_BIN_DIR/
-    elif [ -f "neoxad" ]; then
-        sudo cp neoxad $NEOXA_BIN_DIR/
-        sudo cp neoxa-cli $NEOXA_BIN_DIR/
+    # Binaries are extracted directly to /tmp (no subdirectory)
+    if [ -f "neoxad" ] && [ -f "neoxa-cli" ]; then
+        cp neoxad $NEOXA_BIN_DIR/
+        cp neoxa-cli $NEOXA_BIN_DIR/
     else
-        error "Could not find neoxad binary"
+        error "Could not find neoxad or neoxa-cli binaries"
     fi
     
-    sudo chmod +x $NEOXA_BIN_DIR/neoxad
-    sudo chmod +x $NEOXA_BIN_DIR/neoxa-cli
+    chmod +x $NEOXA_BIN_DIR/neoxad
+    chmod +x $NEOXA_BIN_DIR/neoxa-cli
     
     # Verify installation
     if ! $NEOXA_BIN_DIR/neoxad --version &>/dev/null; then
@@ -136,14 +115,14 @@ configure_neoxa() {
     log "Configuring Neoxa daemon..."
     
     # Create data directory
-    sudo -u $NEOXA_USER mkdir -p "$NEOXA_DATA_DIR"
+    -u $NEOXA_USER mkdir -p "$NEOXA_DATA_DIR"
     
     # Generate RPC credentials
     RPC_USER="neoxarpc$(openssl rand -hex 4)"
     RPC_PASS=$(openssl rand -base64 32)
     
     # Create configuration file
-    sudo -u $NEOXA_USER cat > "$NEOXA_DATA_DIR/neoxa.conf" << EOF
+    -u $NEOXA_USER cat > "$NEOXA_DATA_DIR/neoxa.conf" << EOF
 # Neoxa daemon configuration for mining pool
 # Generated on $(date)
 
@@ -182,8 +161,8 @@ disablewallet=1
 EOF
 
     # Set proper permissions
-    sudo chown $NEOXA_USER:$NEOXA_USER "$NEOXA_DATA_DIR/neoxa.conf"
-    sudo chmod 600 "$NEOXA_DATA_DIR/neoxa.conf"
+    chown $NEOXA_USER:$NEOXA_USER "$NEOXA_DATA_DIR/neoxa.conf"
+    chmod 600 "$NEOXA_DATA_DIR/neoxa.conf"
     
     # Save RPC credentials for pool configuration
     cat > /tmp/neoxa-rpc-credentials.txt << EOF
@@ -201,7 +180,7 @@ EOF
 create_systemd_service() {
     log "Creating systemd service..."
     
-    sudo cat > /etc/systemd/system/neoxa-daemon.service << EOF
+    cat > /etc/systemd/system/neoxa-daemon.service << EOF
 [Unit]
 Description=Neoxa Daemon
 Documentation=https://github.com/NeoxaChain/Neoxa
@@ -236,8 +215,8 @@ ProtectHome=false
 WantedBy=multi-user.target
 EOF
 
-    sudo systemctl daemon-reload
-    sudo systemctl enable neoxa-daemon
+    systemctl daemon-reload
+    systemctl enable neoxa-daemon
     
     log "systemd service created and enabled"
 }
@@ -245,7 +224,7 @@ EOF
 setup_logrotate() {
     log "Setting up log rotation..."
     
-    sudo cat > /etc/logrotate.d/neoxa << EOF
+    cat > /etc/logrotate.d/neoxa << EOF
 $NEOXA_DATA_DIR/debug.log {
     daily
     missingok
@@ -265,12 +244,12 @@ setup_monitoring() {
     log "Setting up monitoring scripts..."
     
     # Create monitoring script
-    sudo cat > $NEOXA_BIN_DIR/neoxa-monitor.sh << 'EOF'
+    cat > $NEOXA_BIN_DIR/neoxa-monitor.sh << 'EOF'
 #!/bin/bash
 # Neoxa daemon monitoring script
 
 NEOXA_CLI="/usr/local/bin/neoxa-cli"
-DATA_DIR="/home/neoxa/.neoxa"
+DATA_DIR="$HOME/.neoxa"
 
 # Check if daemon is running
 if ! pgrep -f "neoxad" > /dev/null; then
@@ -333,7 +312,7 @@ fi
 exit 0
 EOF
 
-    sudo chmod +x $NEOXA_BIN_DIR/neoxa-monitor.sh
+    chmod +x $NEOXA_BIN_DIR/neoxa-monitor.sh
     
     # Add monitoring cron job
     (crontab -l 2>/dev/null; echo "*/5 * * * * $NEOXA_BIN_DIR/neoxa-monitor.sh") | crontab -
@@ -344,13 +323,13 @@ EOF
 start_daemon() {
     log "Starting Neoxa daemon..."
     
-    sudo systemctl start neoxa-daemon
+    systemctl start neoxa-daemon
     
     # Wait for daemon to start
     sleep 10
     
     # Check if it's running
-    if sudo systemctl is-active --quiet neoxa-daemon; then
+    if systemctl is-active --quiet neoxa-daemon; then
         log "Neoxa daemon started successfully"
     else
         error "Failed to start Neoxa daemon"
@@ -371,9 +350,9 @@ display_summary() {
     cat /tmp/neoxa-rpc-credentials.txt
     echo ""
     echo "Useful commands:"
-    echo "  sudo systemctl status neoxa-daemon       # Check service status"
-    echo "  sudo systemctl restart neoxa-daemon      # Restart daemon"
-    echo "  sudo journalctl -u neoxa-daemon -f       # View logs"
+    echo "  systemctl status neoxa-daemon       # Check service status"
+    echo "  systemctl restart neoxa-daemon      # Restart daemon"
+    echo "  journalctl -u neoxa-daemon -f       # View logs"
     echo "  $NEOXA_BIN_DIR/neoxa-monitor.sh           # Monitor daemon"
     echo "  $NEOXA_BIN_DIR/neoxa-cli getinfo          # Get daemon info"
     echo ""
@@ -388,7 +367,7 @@ main() {
     log "Starting Neoxa daemon deployment..."
     
     check_prerequisites
-    create_user
+    create_config_dir
     install_dependencies
     download_neoxa
     install_neoxa
