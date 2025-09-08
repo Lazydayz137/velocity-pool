@@ -147,7 +147,7 @@ daemon=1
 rpcuser=$RPC_USER
 rpcpassword=$RPC_PASS
 rpcbind=127.0.0.1
-rpcport=8766
+rpcport=8767
 rpcallowip=127.0.0.1
 rpcthreads=8
 
@@ -181,7 +181,7 @@ EOF
     cat > /tmp/meowcoin-rpc-credentials.txt << EOF
 MeowCoin RPC Credentials:
 RPC Host: 127.0.0.1
-RPC Port: 8766
+RPC Port: 8767
 RPC User: $RPC_USER
 RPC Password: $RPC_PASS
 Configuration saved to: $MEOWCOIN_DATA_DIR/meowcoin.conf
