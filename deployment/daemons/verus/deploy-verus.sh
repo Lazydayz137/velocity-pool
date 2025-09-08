@@ -7,9 +7,7 @@ set -e
 
 # Configuration
 VERUS_VERSION="1.2.11"
-VERUS_USER="verus"
-VERUS_HOME="/home/verus"
-VERUS_DATA_DIR="$VERUS_HOME/.komodo/VRSC"
+VERUS_DATA_DIR="$HOME/.komodo/VRSC"
 VERUS_BIN_DIR="/usr/local/bin"
 DOWNLOAD_URL="https://github.com/VerusCoin/VerusCoin/releases/download/v${VERUS_VERSION}"
 ARCH="x86_64"
@@ -52,23 +50,19 @@ check_prerequisites() {
     log "Prerequisites check completed"
 }
 
-create_user() {
-    log "Creating Verus daemon user..."
+create_config_dir() {
+    log "Creating Verus configuration directory..."
     
-    if ! id "$VERUS_USER" &>/dev/null; then
-        sudo adduser --disabled-password --gecos "" $VERUS_USER
-        sudo usermod -aG sudo $VERUS_USER
-        log "Created user: $VERUS_USER"
-    else
-        log "User $VERUS_USER already exists"
-    fi
+    mkdir -p "$VERUS_DATA_DIR"
+    
+    log "Configuration directory created: $VERUS_DATA_DIR"
 }
 
 install_dependencies() {
     log "Installing system dependencies..."
     
-    sudo apt update
-    sudo apt install -y \
+    apt update
+    apt install -y \
         wget \
         curl \
         unzip \
@@ -130,10 +124,10 @@ install_verus() {
     cd "$EXTRACT_DIR"
     
     # Install binaries
-    sudo cp verusd $VERUS_BIN_DIR/
-    sudo cp verus $VERUS_BIN_DIR/
-    sudo chmod +x $VERUS_BIN_DIR/verusd
-    sudo chmod +x $VERUS_BIN_DIR/verus
+    cp verusd $VERUS_BIN_DIR/
+    cp verus $VERUS_BIN_DIR/
+    chmod +x $VERUS_BIN_DIR/verusd
+    chmod +x $VERUS_BIN_DIR/verus
     
     # Verify installation
     if ! $VERUS_BIN_DIR/verusd --version &>/dev/null; then
@@ -147,14 +141,14 @@ configure_verus() {
     log "Configuring Verus daemon..."
     
     # Create data directory
-    sudo -u $VERUS_USER mkdir -p "$VERUS_DATA_DIR"
+    mkdir -p "$VERUS_DATA_DIR"
     
     # Generate RPC credentials
     RPC_USER="verusrpc$(openssl rand -hex 4)"
     RPC_PASS=$(openssl rand -base64 32)
     
     # Create configuration file
-    sudo -u $VERUS_USER cat > "$VERUS_DATA_DIR/VRSC.conf" << EOF
+    cat > "$VERUS_DATA_DIR/VRSC.conf" << EOF
 # Verus daemon configuration for mining pool
 # Generated on $(date)
 
@@ -195,8 +189,7 @@ disablewallet=1
 EOF
 
     # Set proper permissions
-    sudo chown $VERUS_USER:$VERUS_USER "$VERUS_DATA_DIR/VRSC.conf"
-    sudo chmod 600 "$VERUS_DATA_DIR/VRSC.conf"
+    chmod 600 "$VERUS_DATA_DIR/VRSC.conf"
     
     # Save RPC credentials for pool configuration
     cat > /tmp/verus-rpc-credentials.txt << EOF
@@ -214,7 +207,7 @@ EOF
 create_systemd_service() {
     log "Creating systemd service..."
     
-    sudo cat > /etc/systemd/system/verus-daemon.service << EOF
+    cat > /etc/systemd/system/verus-daemon.service << EOF
 [Unit]
 Description=Verus Daemon
 Documentation=https://github.com/VerusCoin/VerusCoin
@@ -222,17 +215,17 @@ After=network.target
 
 [Service]
 Type=forking
-User=$VERUS_USER
-Group=$VERUS_USER
-WorkingDirectory=$VERUS_HOME
+User=root
+Group=root
+WorkingDirectory=/root
 ExecStart=$VERUS_BIN_DIR/verusd -datadir=$VERUS_DATA_DIR -daemon
-ExecStop=$VERUS_BIN_DIR/verus -datadir=$VERUS_DATA_DIR stop
+ExecStop=$VERUS_BIN_DIR/verus stop
 ExecReload=/bin/kill -HUP \$MAINPID
 KillMode=mixed
 Restart=always
-RestartSec=10
-TimeoutStartSec=60
-TimeoutStopSec=60
+RestartSec=15
+TimeoutStartSec=120
+TimeoutStopSec=120
 
 # Resource limits
 LimitNOFILE=65536
@@ -248,8 +241,8 @@ ProtectHome=false
 WantedBy=multi-user.target
 EOF
 
-    sudo systemctl daemon-reload
-    sudo systemctl enable verus-daemon
+    systemctl daemon-reload
+    systemctl enable verus-daemon
     
     log "systemd service created and enabled"
 }
@@ -257,7 +250,7 @@ EOF
 setup_logrotate() {
     log "Setting up log rotation..."
     
-    sudo cat > /etc/logrotate.d/verus << EOF
+    cat > /etc/logrotate.d/verus << EOF
 $VERUS_DATA_DIR/debug.log {
     daily
     missingok
@@ -266,7 +259,7 @@ $VERUS_DATA_DIR/debug.log {
     delaycompress
     copytruncate
     notifempty
-    create 644 $VERUS_USER $VERUS_USER
+    create 644 root root
 }
 EOF
     
@@ -277,7 +270,7 @@ setup_monitoring() {
     log "Setting up monitoring scripts..."
     
     # Create monitoring script
-    sudo cat > $VERUS_BIN_DIR/verus-monitor.sh << 'EOF'
+    cat > $VERUS_BIN_DIR/verus-monitor.sh << 'EOF'
 #!/bin/bash
 # Verus daemon monitoring script
 
@@ -321,7 +314,7 @@ fi
 exit 0
 EOF
 
-    sudo chmod +x $VERUS_BIN_DIR/verus-monitor.sh
+    chmod +x $VERUS_BIN_DIR/verus-monitor.sh
     
     # Add monitoring cron job
     (crontab -l 2>/dev/null; echo "*/5 * * * * $VERUS_BIN_DIR/verus-monitor.sh") | crontab -
@@ -332,13 +325,13 @@ EOF
 start_daemon() {
     log "Starting Verus daemon..."
     
-    sudo systemctl start verus-daemon
+    systemctl start verus-daemon
     
     # Wait for daemon to start
-    sleep 10
+    sleep 15
     
     # Check if it's running
-    if sudo systemctl is-active --quiet verus-daemon; then
+    if systemctl is-active --quiet verus-daemon; then
         log "Verus daemon started successfully"
     else
         error "Failed to start Verus daemon"
@@ -376,7 +369,7 @@ main() {
     log "Starting Verus daemon deployment..."
     
     check_prerequisites
-    create_user
+    create_config_dir
     install_dependencies
     download_verus
     install_verus
