@@ -84,6 +84,46 @@ Confirmation Tracking → Balance Finalization
 - **PaymentProcessor** ↔ **Database**: Balance calculations and transaction logs
 - **API Controller** ↔ **Statistics Service**: Real-time pool metrics
 
+## Deployment & Troubleshooting Rules
+
+### CRITICAL: Balanced Problem-Solving Approach
+
+**When encountering deployment issues:**
+
+1. **IMMEDIATE FIX**: Provide direct command to fix the current issue
+   - Example: `systemctl stop service && sed -i 's/old/new/' /path/to/config && systemctl start service`
+   - Don't make user wait while you "research" - give working solution first
+
+2. **ROOT CAUSE FIX**: Update deployment scripts/code to prevent future occurrences
+   - Fix the actual source code that caused the problem
+   - Commit proper fixes to repository
+   - Don't create "band-aid" scripts for one-time issues
+
+3. **AVOID EXTREMES**:
+   - ❌ DON'T: Only give manual commands (doesn't fix root cause)
+   - ❌ DON'T: Over-engineer with unnecessary "fix" scripts in repo
+   - ✅ DO: Balance immediate relief + permanent solution
+
+### Port Conflict Resolution
+
+**Current daemon port assignments:**
+- Verus: 27485 (P2P), 27486 (RPC)
+- MeowCoin: 8788 (P2P), 8766 (RPC) 
+- Raptoreum: 10225 (P2P), 10226 (RPC)
+- Dero: 10101 (P2P), 10102 (RPC)
+- Neoxa: 8789 (P2P), 8766 (RPC)
+
+**When daemon fails to start:**
+1. Check actual port usage: `ss -tuln | grep PORT` and `lsof -i :PORT`
+2. Identify conflicting process before assuming multiple instances
+3. Update systemd service with `-port=XXXX` parameter if needed
+
+### Configuration Conflicts
+
+**Never use both:**
+- `-daemon` command line flag AND `daemon=1` in config file
+- Choose one method consistently across all daemons
+
 ## Common Development Commands
 
 ### Building the Project
