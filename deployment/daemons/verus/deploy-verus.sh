@@ -109,8 +109,9 @@ download_verus() {
         error "Downloaded file not found: $FILENAME"
     fi
     
-    # Extract binary
+    # Extract binary (double extraction - tgz contains tar.gz)
     tar -xzf "$FILENAME" || error "Failed to extract Verus binary"
+    tar -xzf "Verus-CLI-Linux-v${VERUS_VERSION}-${ARCH}.tar.gz" || error "Failed to extract inner Verus archive"
     
     log "Verus binary downloaded and extracted"
 }
@@ -120,10 +121,10 @@ install_verus() {
     
     cd /tmp
     
-    # Find the extracted directory (varies by release)
-    EXTRACT_DIR=$(ls -d */ | grep -i verus | head -1)
-    if [ -z "$EXTRACT_DIR" ]; then
-        error "Could not find extracted Verus directory"
+    # The extracted directory is always 'verus-cli'
+    EXTRACT_DIR="verus-cli"
+    if [ ! -d "$EXTRACT_DIR" ]; then
+        error "Could not find extracted Verus directory: $EXTRACT_DIR"
     fi
     
     cd "$EXTRACT_DIR"
