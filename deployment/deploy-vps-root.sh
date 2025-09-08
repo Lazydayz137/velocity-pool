@@ -113,53 +113,22 @@ install_dotnet() {
     UBUNTU_VERSION=$(cat /etc/os-release | grep VERSION_ID | cut -d'"' -f2)
     log "Detected Ubuntu version: $UBUNTU_VERSION"
     
-    # Handle Ubuntu 24.04 specifically (multiple fallback methods)
+    # Handle Ubuntu 24.04 with reliable snap method
     if [[ "$UBUNTU_VERSION" == "24.04" ]]; then
-        log "Installing .NET 6 for Ubuntu 24.04 with fallback methods..."
+        log "Installing .NET 6 for Ubuntu 24.04 using snap..."
         
-        # Method 1: Try direct download and install
-        log "Trying Method 1: Direct Microsoft installer..."
-        if wget -q https://download.microsoft.com/download/1/b/4/1b4de605-1378-4a78-be9c-59d70b8e0519/dotnet-sdk-6.0.428-linux-x64.tar.gz -O dotnet.tar.gz; then
-            mkdir -p /opt/dotnet
-            tar -xzf dotnet.tar.gz -C /opt/dotnet
-            ln -sf /opt/dotnet/dotnet /usr/local/bin/dotnet
-            rm dotnet.tar.gz
-            
-            # Verify this method worked
-            if dotnet --version &>/dev/null; then
-                log "Method 1 successful - direct download"
-            else
-                log "Method 1 failed, trying Method 2..."
-                rm -rf /opt/dotnet /usr/local/bin/dotnet
-                
-                # Method 2: Try snap
-                log "Trying Method 2: Snap installation..."
-                if snap install dotnet-sdk --classic --channel=6.0; then
-                    ln -sf /snap/dotnet-sdk/current/dotnet /usr/local/bin/dotnet
-                    
-                    if dotnet --version &>/dev/null; then
-                        log "Method 2 successful - snap"
-                    else
-                        log "Method 2 failed, trying Method 3..."
-                        
-                        # Method 3: Try Ubuntu 22.04 repo as fallback
-                        log "Trying Method 3: Ubuntu 22.04 repository..."
-                        wget -q https://packages.microsoft.com/config/ubuntu/22.04/packages-microsoft-prod.deb -O packages-microsoft-prod.deb
-                        dpkg -i packages-microsoft-prod.deb
-                        rm packages-microsoft-prod.deb
-                        apt update
-                        DEBIAN_FRONTEND=noninteractive apt install -y dotnet-sdk-6.0 || true
-                    fi
-                else
-                    error "All .NET installation methods failed for Ubuntu 24.04"
-                fi
-            fi
-        else
-            error "Failed to download .NET SDK"
-        fi
+        # Use snap (most reliable for Ubuntu 24.04)
+        snap install dotnet-sdk --classic --channel=6.0
+        
+        # Create system-wide symlink
+        ln -sf /snap/dotnet-sdk/current/dotnet /usr/local/bin/dotnet
+        
+        # Set environment for snap installation
+        echo 'export DOTNET_ROOT=/snap/dotnet-sdk/current' >> /etc/environment
+        echo 'export PATH=$PATH:/snap/dotnet-sdk/current' >> /etc/environment
         
     else
-        # For other Ubuntu versions (standard method)
+        # For other Ubuntu versions (standard Microsoft repository method)
         log "Installing .NET 6 for Ubuntu $UBUNTU_VERSION..."
         wget -q https://packages.microsoft.com/config/ubuntu/${UBUNTU_VERSION}/packages-microsoft-prod.deb -O packages-microsoft-prod.deb
         dpkg -i packages-microsoft-prod.deb
@@ -171,15 +140,11 @@ install_dotnet() {
     
     # Final verification
     if ! dotnet --version &>/dev/null; then
-        error ".NET 6 SDK installation failed completely. Please install manually."
+        error ".NET 6 SDK installation failed. Please check the logs above."
     fi
     
     DOTNET_VERSION=$(dotnet --version)
     log ".NET SDK installed successfully: $DOTNET_VERSION"
-    
-    # Set environment variables for all users
-    echo 'export DOTNET_ROOT=/opt/dotnet' >> /etc/environment
-    echo 'export PATH=$PATH:/opt/dotnet' >> /etc/environment
 }
 
 install_postgresql() {
