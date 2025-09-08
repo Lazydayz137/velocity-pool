@@ -61,4 +61,26 @@ EXPORT const char* firopow_get_version() noexcept
     return firopow::revision;
 }
 
+/// Verify a FiroPow solution
+EXPORT bool firopow_verify(const firopow::hash256* header_hash, uint64_t nonce, uint32_t height, const firopow::hash256* mix_hash, firopow::hash256* hash_return) noexcept
+{
+    static ethash::epoch_context_ptr context{nullptr, nullptr};
+
+    const auto epoch_number = firopow::get_epoch_number(height);
+
+    if (!context || context->epoch_number != epoch_number)
+        context = ethash::create_epoch_context(epoch_number);
+
+    if (!context)
+        return false; // Failed to create context
+
+    auto result = firopow::hash(*context, height, *header_hash, nonce);
+
+    if (std::memcmp(result.mix_hash.bytes, mix_hash->bytes, 32) != 0)
+        return false;
+
+    *hash_return = result.final_hash;
+    return true;
+}
+
 }  // extern "C"

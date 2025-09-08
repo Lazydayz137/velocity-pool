@@ -4,6 +4,7 @@
 
 #pragma once
 
+#include "ethash/hash_types.h"
 #include <array>
 #include <cstdint>
 
@@ -27,6 +28,15 @@ inline std::array<uint32_t, N> uint32s(const std::array<uint32_t, N>& arr) noexc
     std::array<uint32_t, N> result;
     for (size_t i = 0; i < N; ++i)
         result[i] = uint32(arr[i]);
+    return result;
+}
+
+/// Converts ethash::hash256 to little-endian.
+inline ethash::hash256 uint32s(const ethash::hash256& hash) noexcept
+{
+    ethash::hash256 result;
+    for (size_t i = 0; i < 8; ++i)
+        result.word32s[i] = uint32(hash.word32s[i]);
     return result;
 }
 
