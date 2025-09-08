@@ -6,13 +6,13 @@
 set -e
 
 # Configuration
-VERUS_VERSION="0.9.8-2"
+VERUS_VERSION="1.2.11"
 VERUS_USER="verus"
 VERUS_HOME="/home/verus"
 VERUS_DATA_DIR="$VERUS_HOME/.komodo/VRSC"
 VERUS_BIN_DIR="/usr/local/bin"
 DOWNLOAD_URL="https://github.com/VerusCoin/VerusCoin/releases/download/v${VERUS_VERSION}"
-ARCH="linux-x86_64"
+ARCH="x86_64"
 
 # Colors for output
 RED='\033[0;31m'
@@ -98,8 +98,8 @@ download_verus() {
     
     cd /tmp
     
-    # Download the binary
-    FILENAME="Verus-CLI-${ARCH}-v${VERUS_VERSION}.tar.gz"
+    # Download the binary (correct filename format)
+    FILENAME="Verus-CLI-Linux-v${VERUS_VERSION}-${ARCH}.tgz"
     if [ ! -f "$FILENAME" ]; then
         wget "${DOWNLOAD_URL}/${FILENAME}" || error "Failed to download Verus binary"
     fi

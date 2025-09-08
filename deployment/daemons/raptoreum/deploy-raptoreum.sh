@@ -6,13 +6,13 @@
 set -e
 
 # Configuration
-RAPTOREUM_VERSION="1.3.17.00"
+RAPTOREUM_VERSION="2.0.3.01-mainnet"
 RAPTOREUM_USER="raptoreum"
 RAPTOREUM_HOME="/home/raptoreum"
 RAPTOREUM_DATA_DIR="$RAPTOREUM_HOME/.raptoreumcore"
 RAPTOREUM_BIN_DIR="/usr/local/bin"
-DOWNLOAD_URL="https://github.com/Raptor3um/raptoreum/releases/download/v${RAPTOREUM_VERSION}"
-ARCH="x86_64-linux-gnu"
+DOWNLOAD_URL="https://github.com/Raptor3um/raptoreum/releases/download/${RAPTOREUM_VERSION}"
+ARCH="ubuntu22"
 
 # Colors for output
 RED='\033[0;31m'
@@ -85,14 +85,10 @@ download_raptoreum() {
     
     cd /tmp
     
-    # Download the binary
-    FILENAME="raptoreum-${RAPTOREUM_VERSION}-${ARCH}.tar.gz"
+    # Download the binary (correct filename)
+    FILENAME="raptoreum-${ARCH}-${RAPTOREUM_VERSION}-.tar.gz"
     if [ ! -f "$FILENAME" ]; then
-        # Try different possible filenames
-        wget "${DOWNLOAD_URL}/${FILENAME}" || \
-        wget "${DOWNLOAD_URL}/raptoreum-${RAPTOREUM_VERSION}-linux.tar.gz" -O "${FILENAME}" || \
-        wget "${DOWNLOAD_URL}/raptoreum-${RAPTOREUM_VERSION}.tar.gz" -O "${FILENAME}" || \
-        error "Failed to download Raptoreum binary"
+        wget "${DOWNLOAD_URL}/${FILENAME}" || error "Failed to download Raptoreum binary"
     fi
     
     log "Raptoreum binary downloaded successfully"

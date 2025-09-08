@@ -6,13 +6,13 @@
 set -e
 
 # Configuration
-DERO_VERSION="3.4.103"
+DERO_VERSION="Release142"
 DERO_USER="dero"
 DERO_HOME="/home/dero"
 DERO_DATA_DIR="$DERO_HOME/.dero"
 DERO_BIN_DIR="/usr/local/bin"
-DOWNLOAD_URL="https://github.com/deroproject/derohe/releases/download/v${DERO_VERSION}"
-ARCH="linux-amd64"
+DOWNLOAD_URL="https://github.com/deroproject/derohe/releases/download/${DERO_VERSION}"
+ARCH="linux_amd64"
 
 # Colors for output
 RED='\033[0;31m'
@@ -85,14 +85,10 @@ download_dero() {
     
     cd /tmp
     
-    # Download the binary
-    FILENAME="dero_${ARCH}_${DERO_VERSION}.tar.gz"
+    # Download the binary (correct filename)
+    FILENAME="dero_${ARCH}.tar.gz"
     if [ ! -f "$FILENAME" ]; then
-        # Try different possible filenames
-        wget "${DOWNLOAD_URL}/${FILENAME}" || \
-        wget "${DOWNLOAD_URL}/dero-${ARCH}-${DERO_VERSION}.tar.gz" -O "${FILENAME}" || \
-        wget "${DOWNLOAD_URL}/dero-linux-amd64.tar.gz" -O "${FILENAME}" || \
-        error "Failed to download Dero binary"
+        wget "${DOWNLOAD_URL}/${FILENAME}" || error "Failed to download Dero binary"
     fi
     
     log "Dero binary downloaded successfully"

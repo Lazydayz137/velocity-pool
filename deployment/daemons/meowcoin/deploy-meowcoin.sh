@@ -6,12 +6,13 @@
 set -e
 
 # Configuration
-MEOWCOIN_VERSION="1.5.0"
+MEOWCOIN_VERSION="2.0.5"
+MEOWCOIN_BUILD="673684e10"
 MEOWCOIN_USER="meowcoin"
 MEOWCOIN_HOME="/home/meowcoin"
 MEOWCOIN_DATA_DIR="$MEOWCOIN_HOME/.meowcoin"
 MEOWCOIN_BIN_DIR="/usr/local/bin"
-DOWNLOAD_URL="https://github.com/MeowcoinDev/MeowCoin/releases/download/v${MEOWCOIN_VERSION}"
+DOWNLOAD_URL="https://github.com/Meowcoin-Foundation/Meowcoin/releases/download/Meow-v${MEOWCOIN_VERSION}"
 ARCH="x86_64-linux-gnu"
 
 # Colors for output
@@ -84,13 +85,10 @@ download_meowcoin() {
     
     cd /tmp
     
-    # Download the binary
-    FILENAME="meowcoin-${MEOWCOIN_VERSION}-${ARCH}.tar.gz"
+    # Download the binary (correct filename)
+    FILENAME="meowcoin-${MEOWCOIN_VERSION}-${MEOWCOIN_BUILD}-${ARCH}.tar.gz"
     if [ ! -f "$FILENAME" ]; then
-        # Try different possible filenames
-        wget "${DOWNLOAD_URL}/${FILENAME}" || \
-        wget "${DOWNLOAD_URL}/meowcoin-${MEOWCOIN_VERSION}-linux.tar.gz" -O "${FILENAME}" || \
-        error "Failed to download MeowCoin binary"
+        wget "${DOWNLOAD_URL}/${FILENAME}" || error "Failed to download MeowCoin binary"
     fi
     
     log "MeowCoin binary downloaded successfully"

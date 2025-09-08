@@ -6,13 +6,13 @@
 set -e
 
 # Configuration
-NEOXA_VERSION="2.3.0"
+NEOXA_VERSION="5.1.1.4"
 NEOXA_USER="neoxa"
 NEOXA_HOME="/home/neoxa"
 NEOXA_DATA_DIR="$NEOXA_HOME/.neoxa"
 NEOXA_BIN_DIR="/usr/local/bin"
 DOWNLOAD_URL="https://github.com/NeoxaChain/Neoxa/releases/download/v${NEOXA_VERSION}"
-ARCH="x86_64-linux-gnu"
+ARCH="linux64"
 
 # Colors for output
 RED='\033[0;31m'
@@ -85,14 +85,10 @@ download_neoxa() {
     
     cd /tmp
     
-    # Download the binary
-    FILENAME="neoxa-${NEOXA_VERSION}-${ARCH}.tar.gz"
+    # Download the binary (correct filename - ZIP format)
+    FILENAME="neoxad-${NEOXA_VERSION}-${ARCH}.zip"
     if [ ! -f "$FILENAME" ]; then
-        # Try different possible filenames
-        wget "${DOWNLOAD_URL}/${FILENAME}" || \
-        wget "${DOWNLOAD_URL}/neoxa-${NEOXA_VERSION}-linux.tar.gz" -O "${FILENAME}" || \
-        wget "${DOWNLOAD_URL}/neoxa-linux.tar.gz" -O "${FILENAME}" || \
-        error "Failed to download Neoxa binary"
+        wget "${DOWNLOAD_URL}/${FILENAME}" || error "Failed to download Neoxa binary"
     fi
     
     log "Neoxa binary downloaded successfully"
@@ -103,11 +99,8 @@ install_neoxa() {
     
     cd /tmp
     
-    # Extract binary
-    tar -xzf "neoxa-${NEOXA_VERSION}-${ARCH}.tar.gz" 2>/dev/null || \
-    tar -xzf "neoxa-${NEOXA_VERSION}-linux.tar.gz" 2>/dev/null || \
-    tar -xzf "neoxa-linux.tar.gz" 2>/dev/null || \
-    error "Failed to extract Neoxa binary"
+    # Extract binary (ZIP format)
+    unzip -q "$FILENAME" || error "Failed to extract Neoxa binary"
     
     # Find the extracted directory
     EXTRACT_DIR=$(find . -type d -name "*neoxa*" | head -1)
