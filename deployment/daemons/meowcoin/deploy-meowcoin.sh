@@ -8,8 +8,8 @@ set -e
 # Configuration
 MEOWCOIN_VERSION="2.0.5"
 MEOWCOIN_BUILD="673684e10"
-MEOWCOIN_USER="meowcoin"
-MEOWCOIN_HOME="/home/meowcoin"
+MEOWCOIN_USER="root"
+MEOWCOIN_HOME="/root"
 MEOWCOIN_DATA_DIR="$MEOWCOIN_HOME/.meowcoin"
 MEOWCOIN_BIN_DIR="/usr/local/bin"
 DOWNLOAD_URL="https://github.com/Meowcoin-Foundation/Meowcoin/releases/download/Meow-v${MEOWCOIN_VERSION}"
@@ -54,14 +54,8 @@ check_prerequisites() {
 }
 
 create_user() {
-    log "Creating MeowCoin daemon user..."
-    
-    if ! id "$MEOWCOIN_USER" &>/dev/null; then
-        sudo adduser --disabled-password --gecos "" $MEOWCOIN_USER
-        log "Created user: $MEOWCOIN_USER"
-    else
-        log "User $MEOWCOIN_USER already exists"
-    fi
+    log "Using root user for MeowCoin daemon..."
+    # Using root user - no user creation needed
 }
 
 install_dependencies() {
@@ -112,14 +106,14 @@ install_meowcoin() {
     
     # Install binaries (verified locations: bin/meowcoind and bin/meowcoin-cli)
     if [ -f "bin/meowcoind" ] && [ -f "bin/meowcoin-cli" ]; then
-        sudo cp bin/meowcoind $MEOWCOIN_BIN_DIR/
-        sudo cp bin/meowcoin-cli $MEOWCOIN_BIN_DIR/
+        cp bin/meowcoind $MEOWCOIN_BIN_DIR/
+        cp bin/meowcoin-cli $MEOWCOIN_BIN_DIR/
     else
         error "Could not find meowcoind or meowcoin-cli binaries in bin/ directory"
     fi
     
-    sudo chmod +x $MEOWCOIN_BIN_DIR/meowcoind
-    sudo chmod +x $MEOWCOIN_BIN_DIR/meowcoin-cli
+    chmod +x $MEOWCOIN_BIN_DIR/meowcoind
+    chmod +x $MEOWCOIN_BIN_DIR/meowcoin-cli
     
     # Verify installation
     if ! $MEOWCOIN_BIN_DIR/meowcoind --version &>/dev/null; then
@@ -133,14 +127,14 @@ configure_meowcoin() {
     log "Configuring MeowCoin daemon..."
     
     # Create data directory
-    sudo -u $MEOWCOIN_USER mkdir -p "$MEOWCOIN_DATA_DIR"
+    mkdir -p "$MEOWCOIN_DATA_DIR"
     
     # Generate RPC credentials
     RPC_USER="meowcoinrpc$(openssl rand -hex 4)"
     RPC_PASS=$(openssl rand -base64 32)
     
     # Create configuration file
-    sudo -u $MEOWCOIN_USER cat > "$MEOWCOIN_DATA_DIR/meowcoin.conf" << EOF
+    cat > "$MEOWCOIN_DATA_DIR/meowcoin.conf" << EOF
 # MeowCoin daemon configuration for mining pool
 # Generated on $(date)
 
@@ -153,7 +147,7 @@ daemon=1
 rpcuser=$RPC_USER
 rpcpassword=$RPC_PASS
 rpcbind=127.0.0.1
-rpcport=9766
+rpcport=8766
 rpcallowip=127.0.0.1
 rpcthreads=8
 
@@ -162,6 +156,8 @@ maxconnections=125
 addnode=seed1.meowcoin.org
 addnode=seed2.meowcoin.org
 addnode=seed3.meowcoin.org
+addnode=dnsseed.miac.one
+addnode=dnsseed.miac.one:8788
 
 # Performance settings
 dbcache=2048
@@ -177,16 +173,15 @@ logips=0
 # Security
 disablewallet=1
 EOF
-
+    
     # Set proper permissions
-    sudo chown $MEOWCOIN_USER:$MEOWCOIN_USER "$MEOWCOIN_DATA_DIR/meowcoin.conf"
-    sudo chmod 600 "$MEOWCOIN_DATA_DIR/meowcoin.conf"
+    chmod 600 "$MEOWCOIN_DATA_DIR/meowcoin.conf"
     
     # Save RPC credentials for pool configuration
     cat > /tmp/meowcoin-rpc-credentials.txt << EOF
 MeowCoin RPC Credentials:
 RPC Host: 127.0.0.1
-RPC Port: 9766
+RPC Port: 8766
 RPC User: $RPC_USER
 RPC Password: $RPC_PASS
 Configuration saved to: $MEOWCOIN_DATA_DIR/meowcoin.conf
@@ -198,7 +193,7 @@ EOF
 create_systemd_service() {
     log "Creating systemd service..."
     
-    sudo cat > /etc/systemd/system/meowcoin-daemon.service << EOF
+    cat > /etc/systemd/system/meowcoin-daemon.service << EOF
 [Unit]
 Description=MeowCoin Daemon
 Documentation=https://github.com/MeowcoinDev/MeowCoin
@@ -233,8 +228,8 @@ ProtectHome=false
 WantedBy=multi-user.target
 EOF
 
-    sudo systemctl daemon-reload
-    sudo systemctl enable meowcoin-daemon
+    systemctl daemon-reload
+    systemctl enable meowcoin-daemon
     
     log "systemd service created and enabled"
 }
