@@ -1,5 +1,19 @@
 # Velocity Pool Deployment Guide
 
+## 🚨 **CRITICAL DEPLOYMENT PRINCIPLE: "MEASURE TWICE, CUT ONCE"**
+
+**NEVER write deployment code without complete research and testing first.**
+
+### Research Checklist (MANDATORY before any deployment script):
+1. **Download URLs** - Verify with GitHub API, test actual downloads
+2. **Archive Structure** - Download to /tmp, extract, and inspect contents
+3. **Directory Layout** - Note exact folder names after extraction
+4. **Binary Names** - Verify executable names and locations
+5. **Dependencies** - Check system requirements and library dependencies
+6. **Configuration** - Understand config file formats and required settings
+
+**DO NOT GUESS. DO NOT ASSUME. VERIFY EVERYTHING.**
+
 This guide covers the complete deployment of Velocity Pool on a VPS, including coin daemon setup, pool configuration, and monitoring.
 
 ## Table of Contents

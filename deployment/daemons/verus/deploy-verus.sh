@@ -176,6 +176,9 @@ addnode=node2.verus.io:27485
 gen=0
 genproclimit=0
 
+# Network port
+port=27485
+
 # Performance settings
 dbcache=4096
 maxmempool=512

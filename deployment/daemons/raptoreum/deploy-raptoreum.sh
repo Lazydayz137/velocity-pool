@@ -7,9 +7,7 @@ set -e
 
 # Configuration
 RAPTOREUM_VERSION="2.0.3.01-mainnet"
-RAPTOREUM_USER="raptoreum"
-RAPTOREUM_HOME="/home/raptoreum"
-RAPTOREUM_DATA_DIR="$RAPTOREUM_HOME/.raptoreumcore"
+RAPTOREUM_DATA_DIR="$HOME/.raptoreumcore"
 RAPTOREUM_BIN_DIR="/usr/local/bin"
 DOWNLOAD_URL="https://github.com/Raptor3um/raptoreum/releases/download/${RAPTOREUM_VERSION}"
 ARCH="ubuntu22"
@@ -50,6 +48,14 @@ check_prerequisites() {
     fi
     
     log "Prerequisites check completed"
+}
+
+create_config_dir() {
+    log "Creating Raptoreum configuration directory..."
+    
+    mkdir -p "$RAPTOREUM_DATA_DIR"
+    
+    log "Configuration directory created: $RAPTOREUM_DATA_DIR"
 }
 
 
@@ -115,21 +121,20 @@ configure_raptoreum() {
     log "Configuring Raptoreum daemon..."
     
     # Create data directory
-    -u $RAPTOREUM_USER mkdir -p "$RAPTOREUM_DATA_DIR"
+    mkdir -p "$RAPTOREUM_DATA_DIR"
     
     # Generate RPC credentials
     RPC_USER="raptoreumrpc$(openssl rand -hex 4)"
     RPC_PASS=$(openssl rand -base64 32)
     
     # Create configuration file
-    -u $RAPTOREUM_USER cat > "$RAPTOREUM_DATA_DIR/raptoreum.conf" << EOF
+    cat > "$RAPTOREUM_DATA_DIR/raptoreum.conf" << EOF
 # Raptoreum daemon configuration for mining pool
 # Generated on $(date)
 
 # Network settings
 listen=1
 server=1
-daemon=1
 
 # RPC settings
 rpcuser=$RPC_USER
@@ -165,7 +170,6 @@ par=0
 EOF
 
     # Set proper permissions
-    chown $RAPTOREUM_USER:$RAPTOREUM_USER "$RAPTOREUM_DATA_DIR/raptoreum.conf"
     chmod 600 "$RAPTOREUM_DATA_DIR/raptoreum.conf"
     
     # Save RPC credentials for pool configuration
@@ -192,10 +196,10 @@ After=network.target
 
 [Service]
 Type=forking
-User=$RAPTOREUM_USER
-Group=$RAPTOREUM_USER
-WorkingDirectory=$RAPTOREUM_HOME
-ExecStart=$RAPTOREUM_BIN_DIR/raptoreumd -datadir=$RAPTOREUM_DATA_DIR -daemon -pid=$RAPTOREUM_DATA_DIR/raptoreumd.pid
+User=root
+Group=root
+WorkingDirectory=$HOME
+ExecStart=$RAPTOREUM_BIN_DIR/raptoreumd -datadir=$RAPTOREUM_DATA_DIR -daemon -port=10225
 ExecStop=$RAPTOREUM_BIN_DIR/raptoreum-cli -datadir=$RAPTOREUM_DATA_DIR stop
 ExecReload=/bin/kill -HUP \$MAINPID
 PIDFile=$RAPTOREUM_DATA_DIR/raptoreumd.pid
@@ -237,7 +241,7 @@ $RAPTOREUM_DATA_DIR/debug.log {
     delaycompress
     copytruncate
     notifempty
-    create 644 $RAPTOREUM_USER $RAPTOREUM_USER
+    create 644 root root
 }
 EOF
     

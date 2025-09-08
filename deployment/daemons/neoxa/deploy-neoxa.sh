@@ -134,7 +134,6 @@ configure_neoxa() {
 # Network settings
 listen=1
 server=1
-daemon=1
 
 # RPC settings
 rpcuser=$RPC_USER
@@ -195,7 +194,7 @@ Type=forking
 User=root
 Group=root
 WorkingDirectory=$HOME
-ExecStart=$NEOXA_BIN_DIR/neoxad -datadir=$NEOXA_DATA_DIR -daemon -pid=$NEOXA_DATA_DIR/neoxad.pid
+ExecStart=$NEOXA_BIN_DIR/neoxad -datadir=$NEOXA_DATA_DIR -daemon -port=8789
 ExecStop=$NEOXA_BIN_DIR/neoxa-cli -datadir=$NEOXA_DATA_DIR stop
 ExecReload=/bin/kill -HUP \$MAINPID
 PIDFile=$NEOXA_DATA_DIR/neoxad.pid
