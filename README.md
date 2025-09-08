@@ -3,9 +3,31 @@
 
 <img src="https://github.com/Lazydayz137/velocity-pool/raw/master/logo.png" width="150">
 
-# Velocity Pool
+# Velocity Pool 🚀
 
-A high-performance, multi-currency mining pool software built on .NET 6.0. Based on Miningcore, Velocity Pool provides ultra-low-latency Stratum protocol implementation supporting both Proof-of-Work (PoW) and Proof-of-Stake (PoS) mining for multiple cryptocurrency families including Bitcoin, Ethereum, Monero (CryptoNote), Equihash-based coins, and Ergo.
+A high-performance, multi-currency mining pool with **one-click VPS deployment** and focus on CPU-friendly, ASIC-resistant coins. Built on .NET 6.0 with optimized native libraries for maximum performance.
+
+## ⚡ Quick Deploy
+
+Deploy your entire mining pool infrastructure in under 30 minutes:
+
+```bash
+# On your Ubuntu VPS
+wget -O deploy-vps.sh https://raw.githubusercontent.com/your-org/velocity-pool/main/deployment/deploy-vps.sh
+chmod +x deploy-vps.sh
+./deploy-vps.sh your-domain.com
+```
+
+## 🎯 Strategic Coin Focus
+
+Velocity Pool targets profitable opportunities for new mining operations:
+
+- **Verus (VRSC)** - VerusHash algorithm (CPU-friendly, ASIC-resistant) ✅
+- **Monero (XMR)** - RandomX algorithm (CPU-only, privacy-focused)
+- **Ergo (ERG)** - Autolykos algorithm (GPU-friendly, emerging)
+- **Raptoreum (RTM)** - GhostRider algorithm (CPU-only, ASIC-resistant)
+
+*Why these coins? They avoid ASIC dominance, have active communities, and offer growth potential for new pool operators.*
 
 ### Features
 
@@ -23,52 +45,38 @@ A high-performance, multi-currency mining pool software built on .NET 6.0. Based
 - Docker containerization support
 - Runs on Linux and Windows
 
-## Quick Start
+## 📋 Documentation
 
-### Prerequisites
-- .NET 6.0 SDK and runtime
-- PostgreSQL 10+ (11+ recommended for partitioning)
-- Native dependencies: boost, sodium, OpenSSL development headers
+- **[Quick Start Guide](docs/QUICK_START.md)** - Get running in 30 minutes
+- **[Deployment Guide](docs/DEPLOYMENT.md)** - Complete VPS deployment
+- **[Architecture Overview](WARP.md)** - Technical details and development
 
-### Building on Linux
+## 🖥️ VPS Requirements
 
-```bash
-git clone https://github.com/Lazydayz137/velocity-pool
-cd velocity-pool
+- **OS**: Ubuntu 20.04/22.04 LTS
+- **CPU**: 4+ cores (8+ recommended)
+- **RAM**: 8GB minimum (16GB+ recommended) 
+- **Storage**: 200GB SSD (500GB+ recommended)
+- **Network**: 100Mbps (1Gbps recommended)
 
-# For Ubuntu/Debian
-./build-ubuntu-22.04.sh
-# or ./build-debian-11.sh
-```
+## 🚀 Key Features
 
-### Building with Docker
+✅ **One-Click Deployment** - Complete VPS setup with single script  
+✅ **VerusHash Support** - Native optimized implementation with AES-NI  
+✅ **CPU-Focused Mining** - ASIC-resistant algorithms  
+✅ **Enterprise Security** - UFW firewall, fail2ban, SSL certificates  
+✅ **Auto-Monitoring** - Built-in daemon and pool monitoring  
+✅ **Scalable Architecture** - PostgreSQL, Nginx, systemd services
 
-```bash
-docker build -t velocity-pool:latest .
-```
+## 🔧 Management Commands
 
-### Database Setup
-
-```bash
-sudo -u postgres psql
-CREATE ROLE miningcore WITH LOGIN ENCRYPTED PASSWORD 'your-secure-password';
-CREATE DATABASE miningcore OWNER miningcore;
-\q
-
-sudo -u postgres psql -d miningcore -f src/Miningcore/Persistence/Postgres/Scripts/createdb.sql
-```
-
-### Configuration
-
-1. Copy `config.json.example` to `config.json`
-2. Configure your pools, database connection, and daemon settings
-3. See [Configuration Guide](https://github.com/Lazydayz137/velocity-pool/wiki/Configuration) for details
-
-### Running
+After deployment, manage your pool with simple commands:
 
 ```bash
-cd build
-./Miningcore -c config.json
+velocity-pool start      # Start pool service
+velocity-pool status     # Check service status
+velocity-pool logs       # View real-time logs
+velocity-pool config     # Edit configuration
 ```
 
 ## Documentation
