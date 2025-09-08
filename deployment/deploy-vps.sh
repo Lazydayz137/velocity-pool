@@ -293,12 +293,12 @@ clone_repository() {
     sudo -u $POOL_USER bash << EOF
 cd $POOL_HOME
 if [ ! -d "velocity-pool" ]; then
-    git clone https://github.com/your-org/velocity-pool.git
+    git clone https://github.com/Lazydayz137/velocity-pool.git
     cd velocity-pool
-    git checkout main
+    git checkout master
 else
     cd velocity-pool
-    git pull origin main
+    git pull origin master
 fi
 EOF
 
@@ -442,7 +442,7 @@ create_pool_service() {
     sudo cat > /etc/systemd/system/velocity-pool.service << EOF
 [Unit]
 Description=Velocity Mining Pool
-Documentation=https://github.com/your-org/velocity-pool
+Documentation=https://github.com/Lazydayz137/velocity-pool
 After=network.target postgresql.service
 
 [Service]

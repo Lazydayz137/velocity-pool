@@ -13,7 +13,7 @@ Deploy your entire mining pool infrastructure in under 30 minutes:
 
 ```bash
 # On your Ubuntu VPS
-wget -O deploy-vps.sh https://raw.githubusercontent.com/your-org/velocity-pool/main/deployment/deploy-vps.sh
+wget -O deploy-vps.sh https://raw.githubusercontent.com/Lazydayz137/velocity-pool/master/deployment/deploy-vps.sh
 chmod +x deploy-vps.sh
 ./deploy-vps.sh your-domain.com
 ```
