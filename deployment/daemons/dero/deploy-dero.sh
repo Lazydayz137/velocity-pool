@@ -7,9 +7,7 @@ set -e
 
 # Configuration
 DERO_VERSION="Release142"
-DERO_USER="dero"
-DERO_HOME="/home/dero"
-DERO_DATA_DIR="$DERO_HOME/.dero"
+DERO_DATA_DIR="$HOME/.dero"
 DERO_BIN_DIR="/usr/local/bin"
 DOWNLOAD_URL="https://github.com/deroproject/derohe/releases/download/${DERO_VERSION}"
 ARCH="linux_amd64"
@@ -52,6 +50,14 @@ check_prerequisites() {
     log "Prerequisites check completed"
 }
 
+create_config_dir() {
+    log "Creating Dero configuration directory..."
+    
+    mkdir -p "$DERO_DATA_DIR"
+    
+    log "Configuration directory created: $DERO_DATA_DIR"
+}
+
 
 install_dependencies() {
     log "Installing system dependencies..."
@@ -89,6 +95,15 @@ install_dero() {
     
     cd /tmp
     
+    # Set filename explicitly
+    FILENAME="dero_${ARCH}.tar.gz"
+    
+    # Verify file exists before extraction
+    if [ ! -f "$FILENAME" ]; then
+        error "Dero binary file not found: $FILENAME"
+    fi
+    
+    log "Extracting $FILENAME..."
     # Extract binary (verified: extracts to dero_linux_amd64/ subdirectory)
     tar -xzf "$FILENAME" || error "Failed to extract Dero binary"
     
@@ -123,7 +138,7 @@ configure_dero() {
     log "Configuring Dero daemon..."
     
     # Create data directory
-    -u $DERO_USER mkdir -p "$DERO_DATA_DIR"
+    mkdir -p "$DERO_DATA_DIR"
     
     # Generate RPC credentials
     RPC_USER="derorpc$(openssl rand -hex 4)"
@@ -153,9 +168,9 @@ After=network.target
 
 [Service]
 Type=simple
-User=$DERO_USER
-Group=$DERO_USER
-WorkingDirectory=$DERO_HOME
+User=root
+Group=root
+WorkingDirectory=$HOME
 ExecStart=$DERO_BIN_DIR/derod --data-dir=$DERO_DATA_DIR --rpc-bind=127.0.0.1:10102 --p2p-bind=127.0.0.1:10101 --node-tag=pool
 Restart=always
 RestartSec=10
@@ -194,7 +209,7 @@ setup_logrotate() {
     delaycompress
     copytruncate
     notifempty
-    create 644 $DERO_USER $DERO_USER
+    create 644 root root
 }
 EOF
     

@@ -7,9 +7,7 @@ set -e
 
 # Configuration
 NEOXA_VERSION="5.1.1.4"
-NEOXA_USER="neoxa"
-NEOXA_HOME="/home/neoxa"
-NEOXA_DATA_DIR="$NEOXA_HOME/.neoxa"
+NEOXA_DATA_DIR="$HOME/.neoxa"
 NEOXA_BIN_DIR="/usr/local/bin"
 DOWNLOAD_URL="https://github.com/NeoxaChain/Neoxa/releases/download/v${NEOXA_VERSION}"
 ARCH="linux64"
@@ -52,6 +50,14 @@ check_prerequisites() {
     log "Prerequisites check completed"
 }
 
+create_config_dir() {
+    log "Creating Neoxa configuration directory..."
+    
+    mkdir -p "$NEOXA_DATA_DIR"
+    
+    log "Configuration directory created: $NEOXA_DATA_DIR"
+}
+
 
 install_dependencies() {
     log "Installing system dependencies..."
@@ -89,19 +95,18 @@ install_neoxa() {
     
     cd /tmp
     
-    # Extract binary (verified: ZIP extracts directly to /tmp)
+    # Extract binary (verified: ZIP extracts directly to current directory)
     unzip -q "$FILENAME" || error "Failed to extract Neoxa binary"
     
     # Binaries are extracted directly to /tmp (no subdirectory)
     if [ -f "neoxad" ] && [ -f "neoxa-cli" ]; then
         cp neoxad $NEOXA_BIN_DIR/
         cp neoxa-cli $NEOXA_BIN_DIR/
+        chmod +x $NEOXA_BIN_DIR/neoxad
+        chmod +x $NEOXA_BIN_DIR/neoxa-cli
     else
-        error "Could not find neoxad or neoxa-cli binaries"
+        error "Could not find neoxad or neoxa-cli binaries after extraction"
     fi
-    
-    chmod +x $NEOXA_BIN_DIR/neoxad
-    chmod +x $NEOXA_BIN_DIR/neoxa-cli
     
     # Verify installation
     if ! $NEOXA_BIN_DIR/neoxad --version &>/dev/null; then
@@ -115,14 +120,14 @@ configure_neoxa() {
     log "Configuring Neoxa daemon..."
     
     # Create data directory
-    -u $NEOXA_USER mkdir -p "$NEOXA_DATA_DIR"
+    mkdir -p "$NEOXA_DATA_DIR"
     
     # Generate RPC credentials
     RPC_USER="neoxarpc$(openssl rand -hex 4)"
     RPC_PASS=$(openssl rand -base64 32)
     
     # Create configuration file
-    -u $NEOXA_USER cat > "$NEOXA_DATA_DIR/neoxa.conf" << EOF
+    cat > "$NEOXA_DATA_DIR/neoxa.conf" << EOF
 # Neoxa daemon configuration for mining pool
 # Generated on $(date)
 
@@ -161,7 +166,6 @@ disablewallet=1
 EOF
 
     # Set proper permissions
-    chown $NEOXA_USER:$NEOXA_USER "$NEOXA_DATA_DIR/neoxa.conf"
     chmod 600 "$NEOXA_DATA_DIR/neoxa.conf"
     
     # Save RPC credentials for pool configuration
@@ -188,9 +192,9 @@ After=network.target
 
 [Service]
 Type=forking
-User=$NEOXA_USER
-Group=$NEOXA_USER
-WorkingDirectory=$NEOXA_HOME
+User=root
+Group=root
+WorkingDirectory=$HOME
 ExecStart=$NEOXA_BIN_DIR/neoxad -datadir=$NEOXA_DATA_DIR -daemon -pid=$NEOXA_DATA_DIR/neoxad.pid
 ExecStop=$NEOXA_BIN_DIR/neoxa-cli -datadir=$NEOXA_DATA_DIR stop
 ExecReload=/bin/kill -HUP \$MAINPID
@@ -233,7 +237,7 @@ $NEOXA_DATA_DIR/debug.log {
     delaycompress
     copytruncate
     notifempty
-    create 644 $NEOXA_USER $NEOXA_USER
+    create 644 root root
 }
 EOF
     
