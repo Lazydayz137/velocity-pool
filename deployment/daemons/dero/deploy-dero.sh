@@ -37,9 +37,6 @@ check_prerequisites() {
     log "Checking prerequisites..."
     
     # Check if running as root
-    if [[ $EUID -eq 0 ]]; then
-        error "This script should not be run as root"
-    fi
     
     # Check system requirements
     total_ram=$(free -m | awk '/^Mem:/{print $2}')
