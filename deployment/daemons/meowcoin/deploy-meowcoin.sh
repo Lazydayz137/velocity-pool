@@ -99,28 +99,23 @@ install_meowcoin() {
     
     cd /tmp
     
-    # Extract binary
-    tar -xzf "meowcoin-${MEOWCOIN_VERSION}-${ARCH}.tar.gz" 2>/dev/null || \
-    tar -xzf "meowcoin-${MEOWCOIN_VERSION}-linux.tar.gz" 2>/dev/null || \
-    error "Failed to extract MeowCoin binary"
+    # Extract binary (verified single tar.gz extraction)
+    tar -xzf "$FILENAME" || error "Failed to extract MeowCoin binary"
     
-    # Find the extracted directory
-    EXTRACT_DIR=$(find . -type d -name "*meowcoin*" | head -1)
-    if [ -z "$EXTRACT_DIR" ]; then
-        error "Could not find extracted MeowCoin directory"
+    # The extracted directory is always meowcoin-VERSION-BUILD
+    EXTRACT_DIR="meowcoin-${MEOWCOIN_VERSION}-${MEOWCOIN_BUILD}"
+    if [ ! -d "$EXTRACT_DIR" ]; then
+        error "Could not find extracted MeowCoin directory: $EXTRACT_DIR"
     fi
     
     cd "$EXTRACT_DIR"
     
-    # Install binaries
-    if [ -f "bin/meowcoind" ]; then
+    # Install binaries (verified locations: bin/meowcoind and bin/meowcoin-cli)
+    if [ -f "bin/meowcoind" ] && [ -f "bin/meowcoin-cli" ]; then
         sudo cp bin/meowcoind $MEOWCOIN_BIN_DIR/
         sudo cp bin/meowcoin-cli $MEOWCOIN_BIN_DIR/
-    elif [ -f "meowcoind" ]; then
-        sudo cp meowcoind $MEOWCOIN_BIN_DIR/
-        sudo cp meowcoin-cli $MEOWCOIN_BIN_DIR/
     else
-        error "Could not find meowcoind binary"
+        error "Could not find meowcoind or meowcoin-cli binaries in bin/ directory"
     fi
     
     sudo chmod +x $MEOWCOIN_BIN_DIR/meowcoind
