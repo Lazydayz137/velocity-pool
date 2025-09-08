@@ -90,9 +90,10 @@ Confirmation Tracking → Balance Finalization
 
 **When encountering deployment issues:**
 
-1. **IMMEDIATE FIX**: Provide direct command to fix the current issue
-   - Example: `systemctl stop service && sed -i 's/old/new/' /path/to/config && systemctl start service`
-   - Don't make user wait while you "research" - give working solution first
+1. **IMMEDIATE PROPER FIX**: Give working command that solves the actual problem
+   - ✅ GOOD: `systemctl stop neoxa-daemon && sed -i 's|-daemon -pid=/root/.neoxa/neoxad.pid|-daemon -port=8789|' /etc/systemd/system/neoxa-daemon.service && systemctl daemon-reload && systemctl start neoxa-daemon`
+   - ❌ BAD: `try /usr/local/bin/neoxad -datadir=/root/.neoxa -daemon -port=8789` (doesn't fix systemd service)
+   - Same effort, but one actually fixes the deployed system permanently
 
 2. **ROOT CAUSE FIX**: Update deployment scripts/code to prevent future occurrences
    - Fix the actual source code that caused the problem
